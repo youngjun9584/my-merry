@@ -38,6 +38,7 @@ export default function WeddingInvitation() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNavFixed, setIsNavFixed] = useState(false);
 
   // 갤러리 관련 state
   const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
@@ -228,8 +229,44 @@ export default function WeddingInvitation() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-stone-100 to-amber-50">
+      {/* Hero Section - 메인 이미지 */}
+      <div className="relative h-screen w-full">
+        <img
+          src="/img/IMG_4981.JPG"
+          alt="용준 & 이슬"
+          className="w-full h-full object-cover"
+        />
+
+        {/* Hero 내용 오버레이 */}
+        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+          <div className="text-center text-white px-6 md:px-8">
+            <div className="text-xs text-white/90 mb-3 tracking-wider font-medium">
+              2025. 12. 20.
+            </div>
+            <div className="text-sm md:text-base text-white/90 mb-8 tracking-widest font-medium">
+              JOIN US IN CELEBRATING OUR WEDDING
+            </div>
+            <div className="text-4xl md:text-6xl font-light text-white mb-8 md:mb-12 tracking-wide">
+              <span className="font-semibold">용준</span>
+              <span className="text-white/80 mx-3 md:mx-6">&</span>
+              <span className="font-semibold">이슬</span>
+            </div>
+
+            {/* D-Day Counter */}
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 mx-4 md:mx-auto max-w-md shadow-lg">
+              <div className="text-gray-800 text-lg md:text-xl mb-2 font-medium">
+                용준 & 이슬의 결혼식까지
+              </div>
+              <div className="text-3xl md:text-4xl font-bold text-gray-900">
+                {daysUntil > 0 ? `D-${daysUntil}` : "D-DAY"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* PC & Mobile Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md shadow-sm z-50 border-b border-stone-200">
+      <nav className="sticky top-0 bg-white/90 backdrop-blur-md shadow-sm z-50 border-b border-stone-200">
         {/* PC Navigation - 큰 화면에서만 표시 */}
         <div className="hidden md:block">
           <div className="max-w-4xl mx-auto px-8 py-4">
@@ -327,33 +364,44 @@ export default function WeddingInvitation() {
         </div>
       </nav>
 
-      {/* PC & Mobile Container */}
-      <div className="max-w-md md:max-w-4xl mx-auto pt-20 pb-8">
-        {/* Header Section */}
-        <div className="text-center px-6 md:px-8 py-16 mb-12 md:mb-16">
-          <div className="text-xs text-gray-600 mb-3 tracking-wider font-medium">
-            2025. 12. 20.
-          </div>
-          <div className="text-sm md:text-base text-gray-700 mb-8 tracking-widest font-medium">
-            JOIN US IN CELEBRATING OUR WEDDING
-          </div>
-          <div className="text-4xl md:text-6xl font-light text-gray-800 mb-8 md:mb-12 tracking-wide">
-            <span className="font-semibold">용준</span>
-            <span className="text-gray-600 mx-3 md:mx-6">&</span>
-            <span className="font-semibold">이슬</span>
-          </div>
+      {/* Hero Section - 메인 이미지 */}
+      <div className="relative h-screen w-full">
+        <img
+          src="/img/IMG_4981.JPG"
+          alt="용준 & 이슬"
+          className="w-full h-full object-cover"
+        />
 
-          {/* D-Day Counter */}
-          <div className="bg-white rounded-2xl p-6 md:p-8 mx-4 md:mx-auto max-w-md shadow-lg">
-            <div className="text-gray-800 text-lg md:text-xl mb-2 font-medium">
-              용준 & 이슬의 결혼식까지
+        {/* Hero 내용 오버레이 */}
+        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+          <div className="text-center text-white px-6 md:px-8">
+            <div className="text-xs text-white/90 mb-3 tracking-wider font-medium">
+              2025. 12. 20.
             </div>
-            <div className="text-3xl md:text-4xl font-bold text-gray-900">
-              {daysUntil > 0 ? `D-${daysUntil}` : "D-DAY"}
+            <div className="text-sm md:text-base text-white/90 mb-8 tracking-widest font-medium">
+              JOIN US IN CELEBRATING OUR WEDDING
+            </div>
+            <div className="text-4xl md:text-6xl font-light text-white mb-8 md:mb-12 tracking-wide">
+              <span className="font-semibold">용준</span>
+              <span className="text-white/80 mx-3 md:mx-6">&</span>
+              <span className="font-semibold">이슬</span>
+            </div>
+
+            {/* D-Day Counter */}
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 mx-4 md:mx-auto max-w-md shadow-lg">
+              <div className="text-gray-800 text-lg md:text-xl mb-2 font-medium">
+                용준 & 이슬의 결혼식까지
+              </div>
+              <div className="text-3xl md:text-4xl font-bold text-gray-900">
+                {daysUntil > 0 ? `D-${daysUntil}` : "D-DAY"}
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
+      {/* PC & Mobile Container */}
+      <div className="max-w-md md:max-w-4xl mx-auto pb-8">
         {/* Info Section - 예식 안내 */}
         <section id="info" className="px-4 md:px-8 mb-20 md:mb-32">
           <div className="space-y-8 md:space-y-12">
