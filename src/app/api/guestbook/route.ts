@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 비밀번호는 응답에서 제외
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...guestBookWithoutPassword } = guestBook;
 
     return NextResponse.json(guestBookWithoutPassword, { status: 201 });

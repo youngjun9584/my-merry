@@ -1,6 +1,7 @@
 "use client";
 
 // 네이버지도 API 타입 선언
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
   interface Window {
     naver: {
@@ -9,6 +10,8 @@ declare global {
         Map: new (mapDiv: string | HTMLElement, mapOptions?: any) => any;
         Marker: new (markerOptions: any) => any;
         InfoWindow: new (infoWindowOptions: any) => any;
+        Size: new (width: number, height: number) => any;
+        Point: new (x: number, y: number) => any;
         Event: {
           addListener: (
             target: any,
@@ -23,6 +26,7 @@ declare global {
     };
   }
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 import {
   Heart,
@@ -429,6 +433,7 @@ export default function WeddingInvitation() {
     <div className="min-h-screen bg-gradient-to-b from-stone-100 to-amber-50">
       {/* Hero Section - 메인 이미지 */}
       <div className="relative h-screen w-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/img/IMG_4981.JPG"
           alt="용준 & 이슬"
@@ -532,6 +537,7 @@ export default function WeddingInvitation() {
 
       {/* Hero Section - 메인 이미지 */}
       <div className="relative h-screen w-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/img/IMG_4981.JPG"
           alt="용준 & 이슬"
@@ -677,6 +683,7 @@ export default function WeddingInvitation() {
                   className="aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform"
                   onClick={() => openGalleryModal(index)}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photo.src}
                     alt={photo.caption}
@@ -1121,6 +1128,7 @@ export default function WeddingInvitation() {
             {/* Photo Container */}
             <div className="flex items-center justify-center w-full h-full p-4">
               <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photos[currentPhotoIndex].src}
                   alt={photos[currentPhotoIndex].caption}
