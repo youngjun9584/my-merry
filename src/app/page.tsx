@@ -35,23 +35,18 @@ import {
   ChevronLeft,
   ChevronRight,
   Phone,
-  UserCheck,
-  Flower,
   Menu,
   Copy,
   Check,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Script from "next/script";
 import GuestbookModal from "@/components/GuestbookModal";
 
 interface GuestbookEntry {
-  id: number;
+  idx: number;
   name: string;
-  relationship?: string;
-  message: string;
-  to: string;
-  createdAt: string;
+  content: string;
 }
 
 interface GalleryPhoto {
@@ -69,6 +64,41 @@ export default function WeddingInvitation() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // 방명록 페이지네이션 관련 state
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 4;
+
+  // 터치 스와이핑 관련 state
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  // 실제 파일명 매핑 (데이터베이스 img_id와 매치) - 상수이므로 변경되지 않음
+  const PHOTO_FILE_NAMES = useMemo(
+    () => [
+      "IMG_4919",
+      "IMG_4981",
+      "IMG_5097",
+      "IMG_5127",
+      "IMG_5282",
+      "IMG_5355",
+      "IMG_5573",
+      "IMG_5667",
+      "IMG_5853",
+      "IMG_6080",
+      "IMG_6104",
+      "IMG_6145",
+      "IMG_6303",
+      "IMG_6391",
+      "IMG_6473",
+      "IMG_6484",
+      "IMG_6766",
+      "IMG_6800",
+      "IMG_6910",
+      "IMG_7025",
+    ],
+    []
+  );
 
   // 갤러리 관련 state
   const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
@@ -97,72 +127,142 @@ export default function WeddingInvitation() {
   const [photos, setPhotos] = useState<GalleryPhoto[]>([
     {
       id: 1,
-      src: "/img/IMG_5355.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4919.JPG",
       caption: "우리의 소중한 순간 💕",
       likes: 24,
       isLiked: false,
     },
     {
       id: 2,
-      src: "/img/IMG_6303.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981.JPG",
       caption: "함께한 달콤한 시간 📸",
       likes: 31,
       isLiked: true,
     },
     {
       id: 3,
-      src: "/img/IMG_6145.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_5097.JPG",
       caption: "행복한 우리 🌸",
       likes: 18,
       isLiked: false,
     },
     {
       id: 4,
-      src: "/img/IMG_6104.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_5127.JPG",
       caption: "사랑스러운 날들 💍",
       likes: 42,
       isLiked: true,
     },
     {
       id: 5,
-      src: "/img/IMG_5853.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_5282.JPG",
       caption: "특별한 추억 👰",
       likes: 38,
       isLiked: false,
     },
     {
       id: 6,
-      src: "/img/IMG_5573.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_5355.JPG",
       caption: "영원히 기억할 순간 ✨",
       likes: 27,
       isLiked: false,
     },
     {
       id: 7,
-      src: "/img/IMG_5282.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_5573.JPG",
       caption: "둘만의 시간 🥰",
       likes: 35,
       isLiked: true,
     },
     {
       id: 8,
-      src: "/img/IMG_4981.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_5667.JPG",
       caption: "함께 걸어온 길 🚶‍♀️🚶‍♂️",
       likes: 22,
       isLiked: false,
     },
     {
       id: 9,
-      src: "/img/IMG_5097.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_5853.JPG",
       caption: "웃음 가득한 하루 😊",
       likes: 29,
       isLiked: false,
     },
     {
       id: 10,
-      src: "/img/IMG_5127.jpg",
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6080.JPG",
       caption: "행복한 미래를 향해 🌅",
       likes: 33,
+      isLiked: true,
+    },
+    {
+      id: 11,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6104.JPG",
+      caption: "서로를 바라보는 눈빛 👀",
+      likes: 19,
+      isLiked: false,
+    },
+    {
+      id: 12,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6145.JPG",
+      caption: "달콤한 순간들 🍯",
+      likes: 45,
+      isLiked: true,
+    },
+    {
+      id: 13,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6303.JPG",
+      caption: "함께하는 모든 시간 ⏰",
+      likes: 26,
+      isLiked: false,
+    },
+    {
+      id: 14,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6391.JPG",
+      caption: "사랑이 가득한 하루 💖",
+      likes: 37,
+      isLiked: true,
+    },
+    {
+      id: 15,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6473.JPG",
+      caption: "두근거리는 마음 💓",
+      likes: 41,
+      isLiked: false,
+    },
+    {
+      id: 16,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6484.JPG",
+      caption: "영원한 약속 💒",
+      likes: 52,
+      isLiked: true,
+    },
+    {
+      id: 17,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6766.JPG",
+      caption: "소중한 추억 만들기 📝",
+      likes: 28,
+      isLiked: false,
+    },
+    {
+      id: 18,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6800.JPG",
+      caption: "함께라서 행복해 🤗",
+      likes: 34,
+      isLiked: true,
+    },
+    {
+      id: 19,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_6910.JPG",
+      caption: "새로운 시작 🌱",
+      likes: 39,
+      isLiked: false,
+    },
+    {
+      id: 20,
+      src: "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_7025.JPG",
+      caption: "평생 함께할 우리 💑",
+      likes: 48,
       isLiked: true,
     },
   ]);
@@ -178,45 +278,176 @@ export default function WeddingInvitation() {
     console.log("방명록 데이터 로드 요청");
     setIsLoading(true);
 
-    // 임시 데이터로 테스트
-    setTimeout(() => {
-      console.log("방명록 데이터 로드 완료");
+    try {
+      const response = await fetch("/api/guestbook");
+      if (response.ok) {
+        const data = await response.json();
+        setGuestbookEntries(data);
+      } else {
+        console.error("방명록 로드 실패");
+        setGuestbookEntries([]);
+      }
+    } catch (error) {
+      console.error("방명록 로드 중 오류:", error);
       setGuestbookEntries([]);
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   }, []);
 
   // 새 방명록 추가
   const handleSubmitGuestbook = async (formData: {
     name: string;
-    relationship: string;
-    message: string;
-    to: string;
-    password: string;
+    content: string;
   }) => {
     console.log("방명록 작성 요청:", formData);
 
-    // 임시로 성공했다고 가정
-    console.log("방명록 작성 완료");
+    try {
+      const response = await fetch("/api/guestbook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-    // 방명록 목록 새로고침
-    await fetchGuestbook();
+      if (response.ok) {
+        console.log("방명록 작성 완료");
+        // 방명록 목록 새로고침
+        await fetchGuestbook();
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || "방명록 작성에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("방명록 작성 중 오류:", error);
+      throw error;
+    }
   };
 
-  // 갤러리 관련 함수들
-  const toggleLike = useCallback((photoId: number) => {
-    setPhotos((prevPhotos) =>
-      prevPhotos.map((photo) =>
-        photo.id === photoId
-          ? {
+  // 터치 스와이프 함수들
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(0); // 이전 터치 종료값 초기화
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+    const maxPage = Math.ceil(guestbookEntries.length / itemsPerPage) - 1;
+
+    if (isLeftSwipe && currentPage < maxPage) {
+      setCurrentPage(currentPage + 1);
+    }
+    if (isRightSwipe && currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  // 갤러리 사진 데이터와 좋아요 수 로드
+  const fetchPhotosWithLikes = useCallback(async () => {
+    try {
+      const response = await fetch("/api/photos");
+      if (response.ok) {
+        const photosData = await response.json();
+
+        // 기존 photos 배열과 API 데이터 병합
+        setPhotos((prevPhotos) =>
+          prevPhotos.map((photo, index) => {
+            const fileName = PHOTO_FILE_NAMES[index];
+            const photoData = photosData.find(
+              (p: { img_id: string; like_count: number }) =>
+                p.img_id === fileName
+            );
+            return {
               ...photo,
-              isLiked: !photo.isLiked,
-              likes: photo.isLiked ? photo.likes - 1 : photo.likes + 1,
-            }
-          : photo
-      )
-    );
-  }, []);
+              likes: photoData?.like_count || photo.likes,
+            };
+          })
+        );
+      }
+    } catch (error) {
+      console.error("갤러리 데이터 로드 중 오류:", error);
+    }
+  }, [PHOTO_FILE_NAMES]);
+
+  const addLike = useCallback(
+    async (photoId: number) => {
+      const photoIndex = photos.findIndex((p) => p.id === photoId);
+
+      const imgId = PHOTO_FILE_NAMES[photoIndex];
+
+      // 즉시 UI 업데이트 (Optimistic Update)
+      setPhotos((prevPhotos) =>
+        prevPhotos.map((photo) =>
+          photo.id === photoId
+            ? {
+                ...photo,
+                likes: photo.likes + 1,
+                isLiked: true, // 하트 표시
+              }
+            : photo
+        )
+      );
+
+      try {
+        const response = await fetch(`/api/photos/${imgId}`, {
+          method: "PUT",
+        });
+
+        if (response.ok) {
+          const updatedPhoto = await response.json();
+
+          // 서버 응답으로 정확한 좋아요 수 업데이트
+          setPhotos((prevPhotos) =>
+            prevPhotos.map((photo) =>
+              photo.id === photoId
+                ? {
+                    ...photo,
+                    likes: updatedPhoto.like_count,
+                    isLiked: true,
+                  }
+                : photo
+            )
+          );
+        } else {
+          // 실패 시 이전 상태로 되돌리기
+          setPhotos((prevPhotos) =>
+            prevPhotos.map((photo) =>
+              photo.id === photoId
+                ? {
+                    ...photo,
+                    likes: photo.likes - 1,
+                    isLiked: false,
+                  }
+                : photo
+            )
+          );
+        }
+      } catch (error) {
+        console.error("좋아요 업데이트 중 오류:", error);
+        // 에러 발생 시 이전 상태로 되돌리기
+        setPhotos((prevPhotos) =>
+          prevPhotos.map((photo) =>
+            photo.id === photoId
+              ? {
+                  ...photo,
+                  likes: photo.likes - 1,
+                  isLiked: false,
+                }
+              : photo
+          )
+        );
+      }
+    },
+    [photos, PHOTO_FILE_NAMES]
+  );
 
   const openGalleryModal = useCallback((index: number) => {
     setCurrentPhotoIndex(index);
@@ -424,10 +655,11 @@ export default function WeddingInvitation() {
     }
   };
 
-  // 컴포넌트 마운트 시 방명록 로드
+  // 컴포넌트 마운트 시 방명록과 갤러리 데이터 로드
   useEffect(() => {
     fetchGuestbook();
-  }, [fetchGuestbook]);
+    fetchPhotosWithLikes();
+  }, [fetchGuestbook, fetchPhotosWithLikes]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-stone-100 to-amber-50">
@@ -536,35 +768,32 @@ export default function WeddingInvitation() {
       </nav>
 
       {/* Hero Section - 메인 이미지 */}
-      <div className="relative h-screen w-full">
+      <div className="relative h-[300px] w-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/img/IMG_4981.JPG"
+          src="/img/time.PNG"
           alt="용준 & 이슬"
           className="w-full h-full object-cover"
         />
 
         {/* Hero 내용 오버레이 */}
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-          <div className="text-center text-white px-6 md:px-8">
-            <div className="text-xs text-white/90 mb-3 tracking-wider font-medium">
+        <div className="absolute inset-0 bg-black/30 flex  justify-center">
+          <div className="text-center text-white px-6 pt-10">
+            <div className="text-xs text-white/90 mb-2 tracking-wider">
               2025. 12. 20.
             </div>
-            <div className="text-sm md:text-base text-white/90 mb-8 tracking-widest font-medium">
-              JOIN US IN CELEBRATING OUR WEDDING
-            </div>
-            <div className="text-4xl md:text-6xl font-light text-white mb-8 md:mb-12 tracking-wide">
+            <div className="text-3xl md:text-4xl font-light text-white mb-4 tracking-wide">
               <span className="font-semibold">용준</span>
-              <span className="text-white/80 mx-3 md:mx-6">&</span>
+              <span className="text-white/80 mx-3">&</span>
               <span className="font-semibold">이슬</span>
             </div>
 
             {/* D-Day Counter */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-none md:rounded-2xl p-4 md:p-8 mx-0 md:mx-auto max-w-md shadow-lg">
-              <div className="text-gray-800 text-lg md:text-xl mb-2 font-medium">
-                용준 & 이슬의 결혼식까지
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 mx-auto max-w-xs shadow-lg">
+              <div className="text-gray-800 text-sm mb-1 font-medium">
+                결혼식까지
               </div>
-              <div className="text-3xl md:text-4xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-gray-900">
                 {daysUntil > 0 ? `D-${daysUntil}` : "D-DAY"}
               </div>
             </div>
@@ -680,15 +909,39 @@ export default function WeddingInvitation() {
               {photos.slice(0, 8).map((photo, index) => (
                 <div
                   key={photo.id}
-                  className="aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => openGalleryModal(index)}
+                  className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform group"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photo.src}
                     alt={photo.caption}
                     className="w-full h-full object-cover"
+                    onClick={() => openGalleryModal(index)}
                   />
+
+                  {/* 좋아요 오버레이 */}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
+                    <div className="absolute bottom-2 right-2 flex items-center space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addLike(photo.id);
+                        }}
+                        className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors pointer-events-auto"
+                      >
+                        <Heart
+                          className={`w-4 h-4 ${
+                            photo.isLiked
+                              ? "text-red-500 fill-current"
+                              : "text-gray-600"
+                          }`}
+                        />
+                      </button>
+                      <div className="px-2 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs text-gray-800 font-medium">
+                        {photo.likes}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -701,65 +954,6 @@ export default function WeddingInvitation() {
             </button>
           </div>
         </section>
-
-        {/* RSVP Section - 참석 정보 */}
-        <section id="rsvp" className="px-0 md:px-8 mb-20 md:mb-32">
-          <div className="space-y-8 md:space-y-12">
-            {/* Save the Date */}
-            <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-12 text-center max-w-3xl mx-auto shadow-lg">
-              <div className="text-xl md:text-2xl font-light text-gray-800 mb-4">
-                SAVE THE DATE
-              </div>
-              <h2 className="text-2xl md:text-3xl font-medium text-gray-800 mb-6">
-                참석정보를 전달해주세요
-              </h2>
-              <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-8">
-                축하의 마음으로 예식에 참석하시는 모든 분들을
-                <br />
-                더욱 귀하게 모실 수 있도록, 아래 버튼을 눌러
-                <br />
-                신랑 & 신부에게 참석 정보 전달을 부탁드립니다.
-              </p>
-
-              <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                <div className="text-gray-800 text-lg md:text-xl mb-1">
-                  2025.12.20. 토요일 오후 3:20
-                </div>
-                <div className="text-gray-600">르비르모어 2층 단독홀</div>
-              </div>
-
-              <button className="w-full py-4 bg-gray-800 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors mb-4">
-                <UserCheck className="w-5 h-5 inline mr-2" />
-                참석 정보 전달하기
-              </button>
-            </div>
-
-            {/* 화환 보내기 */}
-            <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-3xl mx-auto shadow-lg">
-              <div className="text-xl md:text-2xl font-light text-gray-800 mb-4">
-                축하 화환 보내기
-              </div>
-              <p className="text-gray-600 text-sm md:text-base mb-6">
-                신랑, 신부의 새로운 시작을 축하해주세요.
-                <br />
-                화환은 예식일에 맞춰 웨딩홀로 배송됩니다.
-              </p>
-
-              <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                <div className="text-gray-800 text-lg md:text-xl mb-1">
-                  2025.12.20. 토요일 오후 3:20
-                </div>
-                <div className="text-gray-600">르비르모어 2층 단독홀</div>
-              </div>
-
-              <button className="w-full py-4 bg-pink-500 text-white rounded-xl font-medium hover:bg-pink-600 transition-colors">
-                <Flower className="w-5 h-5 inline mr-2" />
-                축하 화환 보내기
-              </button>
-            </div>
-          </div>
-        </section>
-
         {/* Account Section */}
         <section id="account" className="px-0 md:px-8 mb-20 md:mb-32">
           <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-4xl mx-auto shadow-lg">
@@ -986,23 +1180,23 @@ export default function WeddingInvitation() {
         {/* Guestbook Section */}
         <section id="guestbook" className="px-0 md:px-8 mb-20 md:mb-32">
           <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-4xl mx-auto shadow-lg">
-            <div className="text-xl md:text-2xl font-light text-gray-800 mb-4">
-              GUEST BOOK
+            <div className="text-lg font-light text-rose-400 mb-4 tracking-widest">
+              WEDDING GUESTBOOK
             </div>
-            <h2 className="text-2xl md:text-3xl font-medium text-gray-800 mb-6">
-              축하 메시지를 남겨주세요
+            <h2 className="text-2xl font-medium text-gray-800 mb-6">
+              축하 메시지
             </h2>
-            <p className="text-gray-600 text-sm md:text-base mb-8">
-              신랑 & 신부의 행복한 앞날을 위해 따뜻한 덕담 한 말씀 남겨주세요.
+            <p className="text-gray-600 text-sm mb-8 leading-relaxed">
+              두 사람의 특별한 날을 함께 축하해주세요 💕
               <br />
-              소중한 추억으로 간직하겠습니다.
+              따뜻한 마음이 담긴 메시지를 남겨주시면 감사하겠습니다.
             </p>
 
             <button
               onClick={() => setIsModalOpen(true)}
-              className="w-full py-4 bg-gray-800 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors mb-6"
+              className="w-full py-4 bg-gradient-to-r from-rose-100 to-pink-100 border border-rose-200 text-rose-700 rounded-xl font-medium hover:from-rose-200 hover:to-pink-200 hover:border-rose-300 transition-all duration-300 mb-6 shadow-sm hover:shadow-md"
             >
-              축하 메시지 작성하기
+              💌 축하 메시지 남기기
             </button>
 
             {isLoading ? (
@@ -1010,58 +1204,139 @@ export default function WeddingInvitation() {
                 <div className="text-gray-600">방명록을 불러오는 중...</div>
               </div>
             ) : guestbookEntries.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                {guestbookEntries.slice(0, 6).map((entry) => (
+              <div className="relative">
+                {/* 방명록 카드 컨테이너 */}
+                <div className="overflow-hidden rounded-2xl">
                   <div
-                    key={entry.id}
-                    className="bg-gray-50 p-4 md:p-6 rounded-xl"
+                    className="flex transition-transform duration-300 ease-out"
+                    style={{
+                      transform: `translateX(-${currentPage * 100}%)`,
+                    }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="text-sm">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            entry.to === "신랑"
-                              ? "bg-blue-100 text-blue-600"
-                              : "bg-pink-100 text-pink-600"
-                          }`}
-                        >
-                          To. {entry.to}
-                        </span>
+                    {Array.from({
+                      length: Math.ceil(guestbookEntries.length / itemsPerPage),
+                    }).map((_, pageIndex) => (
+                      <div key={pageIndex} className="w-full flex-shrink-0">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left p-2">
+                          {guestbookEntries
+                            .slice(
+                              pageIndex * itemsPerPage,
+                              (pageIndex + 1) * itemsPerPage
+                            )
+                            .map((entry) => (
+                              <div
+                                key={entry.idx}
+                                className="relative bg-gradient-to-br from-rose-50 via-pink-50 to-white p-6 rounded-2xl border border-rose-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+                              >
+                                {/* 작은 하트 장식 */}
+                                <div className="absolute top-3 right-3 text-rose-300 text-sm">
+                                  💕
+                                </div>
+
+                                <div className="space-y-4">
+                                  {/* 메시지 */}
+                                  <div className="bg-white/70 p-4 rounded-xl border border-rose-100">
+                                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap italic">
+                                      &ldquo;{entry.content}&rdquo;
+                                    </p>
+                                  </div>
+
+                                  {/* From 서명 */}
+                                  <div className="flex justify-end items-center">
+                                    <div className="flex items-center space-x-2 text-rose-600">
+                                      <div className="w-8 h-px bg-rose-300"></div>
+                                      <span className="text-xs font-medium">
+                                        {entry.name}
+                                      </span>
+                                      <div className="text-rose-400 text-xs">
+                                        ♡
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(entry.createdAt).toLocaleDateString("ko-KR", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        })}
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-800 mb-2 whitespace-pre-wrap">
-                      {entry.message}
-                    </p>
-                    <div className="text-xs text-gray-500">
-                      From. {entry.relationship ? `${entry.relationship} ` : ""}
-                      {entry.name}
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                {/* 페이지네이션 */}
+                {Math.ceil(guestbookEntries.length / itemsPerPage) > 1 && (
+                  <div className="flex justify-center items-center mt-8 space-x-4">
+                    <button
+                      onClick={() =>
+                        setCurrentPage(Math.max(0, currentPage - 1))
+                      }
+                      disabled={currentPage === 0}
+                      className="p-2 text-rose-300 hover:text-rose-500 disabled:opacity-30 transition-colors"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+
+                    <div className="flex space-x-2 items-center">
+                      {Array.from({
+                        length: Math.ceil(
+                          guestbookEntries.length / itemsPerPage
+                        ),
+                      }).map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(index)}
+                          className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                            currentPage === index
+                              ? "bg-rose-400 scale-125"
+                              : "bg-rose-200 hover:bg-rose-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        setCurrentPage(
+                          Math.min(
+                            Math.ceil(guestbookEntries.length / itemsPerPage) -
+                              1,
+                            currentPage + 1
+                          )
+                        )
+                      }
+                      disabled={
+                        currentPage ===
+                        Math.ceil(guestbookEntries.length / itemsPerPage) - 1
+                      }
+                      className="p-2 text-rose-300 hover:text-rose-500 disabled:opacity-30 transition-colors"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* 메시지 개수 */}
+                <div className="text-center mt-6">
+                  <div className="inline-flex items-center bg-rose-50 px-4 py-2 rounded-full border border-rose-100">
+                    <span className="text-rose-400 mr-1">💕</span>
+                    <span className="text-xs text-rose-600 font-medium">
+                      {guestbookEntries.length}개의 축하 메시지
+                    </span>
+                    <span className="text-rose-400 ml-1">💕</span>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="text-gray-600 mb-2">
-                  아직 작성된 메시지가 없습니다.
+              <div className="text-center py-12">
+                <div className="text-5xl mb-4">💌</div>
+                <div className="text-rose-500 text-lg font-medium mb-2">
+                  첫 번째 축하 메시지를 기다리고 있어요
                 </div>
-                <div className="text-xs text-gray-500">
-                  첫 번째 축하 메시지를 남겨보세요! 💕
+                <div className="text-rose-400 text-sm">
+                  소중한 마음을 전해주세요
                 </div>
-              </div>
-            )}
-
-            {guestbookEntries.length > 6 && (
-              <div className="text-center mt-6">
-                <button className="text-gray-600 text-sm hover:text-gray-800 transition-colors">
-                  모든 메시지 보기 ({guestbookEntries.length}개)
-                </button>
               </div>
             )}
           </div>
@@ -1141,9 +1416,7 @@ export default function WeddingInvitation() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-3">
                         <button
-                          onClick={() =>
-                            toggleLike(photos[currentPhotoIndex].id)
-                          }
+                          onClick={() => addLike(photos[currentPhotoIndex].id)}
                           className="transition-transform hover:scale-110"
                         >
                           <Heart

@@ -3,15 +3,15 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const guestBooks = await prisma.guestBook.findMany({
+    const guests = await prisma.guest.findMany({
       orderBy: {
-        createdAt: "desc",
+        idx: "desc",
       },
     });
 
-    return NextResponse.json(guestBooks);
+    return NextResponse.json(guests);
   } catch (error) {
-    console.error("Error fetching guestbook entries:", error);
+    console.error("Error fetching guest entries:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -22,40 +22,41 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, relationship, message, to, password } = body;
+    const { name, content } = body;
 
     // 입력값 검증
-    if (!name || !message || !to || !password) {
+    if (!name || !content) {
       return NextResponse.json(
-        { error: "필수 필드가 누락되었습니다." },
+        { error: "이름과 내용을 모두 입력해주세요." },
         { status: 400 }
       );
     }
 
-    if (!["신랑", "신부"].includes(to)) {
+    // 이름과 내용 길이 검증
+    if (name.length > 50) {
       return NextResponse.json(
-        { error: "유효하지 않은 수신자입니다." },
+        { error: "이름은 50자를 초과할 수 없습니다." },
         { status: 400 }
       );
     }
 
-    const guestBook = await prisma.guestBook.create({
+    if (content.length > 600) {
+      return NextResponse.json(
+        { error: "내용은 600자를 초과할 수 없습니다." },
+        { status: 400 }
+      );
+    }
+
+    const guest = await prisma.guest.create({
       data: {
         name,
-        relationship: relationship || null,
-        message,
-        to,
-        password,
+        content,
       },
     });
 
-    // 비밀번호는 응답에서 제외
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...guestBookWithoutPassword } = guestBook;
-
-    return NextResponse.json(guestBookWithoutPassword, { status: 201 });
+    return NextResponse.json(guest, { status: 201 });
   } catch (error) {
-    console.error("Error creating guestbook entry:", error);
+    console.error("Error creating guest entry:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
