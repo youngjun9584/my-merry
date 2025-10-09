@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma";
 // 좋아요 증가
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { img_id: string } }
+  { params }: { params: Promise<{ img_id: string }> }
 ) {
   try {
-    const { img_id } = params;
+    const { img_id } = await params;
 
     if (!img_id) {
       return NextResponse.json(
@@ -43,10 +43,10 @@ export async function PUT(
 // 특정 사진 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: { img_id: string } }
+  { params }: { params: Promise<{ img_id: string }> }
 ) {
   try {
-    const { img_id } = params;
+    const { img_id } = await params;
 
     const photo = await prisma.photo.findUnique({
       where: { img_id },
