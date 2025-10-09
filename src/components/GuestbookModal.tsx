@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Heart } from "lucide-react";
+import { X } from "lucide-react";
 
 interface GuestbookModalProps {
   isOpen: boolean;
@@ -35,8 +35,8 @@ export default function GuestbookModal({
       return;
     }
 
-    if (formData.content.length > 600) {
-      alert("메시지는 600자를 초과할 수 없습니다.");
+    if (formData.content.length > 200) {
+      alert("메시지는 200자를 초과할 수 없습니다.");
       return;
     }
 
@@ -59,12 +59,11 @@ export default function GuestbookModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-rose-100">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
         <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center space-x-2">
-            <div className="text-xl">💌</div>
-            <h2 className="text-xl font-medium text-gray-800">축하 메시지</h2>
-          </div>
+          <h2 className="text-xl font-medium text-gray-800">
+            축하 메시지 작성하기
+          </h2>
           <button
             onClick={onClose}
             className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -74,49 +73,40 @@ export default function GuestbookModal({
         </div>
 
         <div className="text-center mb-6">
-          <p className="text-rose-600 text-sm">
-            따뜻한 마음을 담은 메시지를 남겨주세요
+          <p className="text-gray-600 text-sm">
+            저희 둘의 결혼을 함께 축하해 주세요
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              성함
-            </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, name: e.target.value }))
               }
-              placeholder="이름을 입력해주세요"
+              placeholder="성함을 남겨주세요"
               maxLength={50}
-              className="w-full px-4 py-3 border border-rose-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-300 text-sm bg-rose-50/30"
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-300 text-sm bg-gray-50"
               required
             />
-            <div className="text-right text-xs text-rose-400 mt-1">
-              {formData.name.length}/50
-            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              축하 메시지
-            </label>
             <textarea
               value={formData.content}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, content: e.target.value }))
               }
-              placeholder="두 분의 앞날을 축복하는 따뜻한 메시지를 남겨주세요 💕"
-              maxLength={600}
-              rows={5}
-              className="w-full px-4 py-3 border border-rose-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-300 resize-none text-sm bg-rose-50/30"
+              placeholder="방명록 내용을 입력해 주세요"
+              maxLength={200}
+              rows={6}
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-300 resize-none text-sm bg-gray-50"
               required
             />
-            <div className="text-right text-xs text-rose-400 mt-1">
-              {formData.content.length}/600
+            <div className="text-right text-xs text-gray-400 mt-1">
+              200자 이내로 작성해 주세요
             </div>
           </div>
 
@@ -124,7 +114,7 @@ export default function GuestbookModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 bg-gradient-to-r from-rose-400 to-pink-400 text-white rounded-xl font-medium hover:from-rose-500 hover:to-pink-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+              className="w-full py-3 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -132,9 +122,7 @@ export default function GuestbookModal({
                   <span>전송 중...</span>
                 </div>
               ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  <span>💕 축하 메시지 보내기 💕</span>
-                </div>
+                <span>작성완료</span>
               )}
             </button>
           </div>

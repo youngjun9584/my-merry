@@ -38,9 +38,11 @@ import {
   Menu,
   Copy,
   Check,
+  MessageCircle,
 } from "lucide-react";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Script from "next/script";
+import Image from "next/image";
 import GuestbookModal from "@/components/GuestbookModal";
 
 interface GuestbookEntry {
@@ -57,6 +59,33 @@ interface GalleryPhoto {
   isLiked: boolean;
 }
 
+// Intersection Observer 훅
+const useIntersectionObserver = (options = {}) => {
+  const [isIntersecting, setIsIntersecting] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsIntersecting(entry.isIntersecting);
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "0px 0px -100px 0px",
+        ...options,
+      }
+    );
+
+    observer.observe(ref.current);
+
+    return () => observer.disconnect();
+  }, [options]);
+
+  return [ref, isIntersecting] as const;
+};
+
 export default function WeddingInvitation() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [guestbookEntries, setGuestbookEntries] = useState<GuestbookEntry[]>(
@@ -69,9 +98,18 @@ export default function WeddingInvitation() {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 4;
 
-  // 터치 스와이핑 관련 state
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
+  // 각 섹션의 Intersection Observer
+  const [calendarRef, calendarVisible] = useIntersectionObserver();
+  const [coupleInfoRef, coupleInfoVisible] = useIntersectionObserver();
+  const [accountRef, accountVisible] = useIntersectionObserver();
+  const [weddingImageRef, weddingImageVisible] = useIntersectionObserver();
+  const [locationRef, locationVisible] = useIntersectionObserver();
+  const [guestbookRef, guestbookVisible] = useIntersectionObserver();
+  const [footerRef, footerVisible] = useIntersectionObserver();
+
+  // 드롭다운 상태 관리
+  const [groomDropdownOpen, setGroomDropdownOpen] = useState(false);
+  const [brideDropdownOpen, setBrideDropdownOpen] = useState(false);
 
   // 실제 파일명 매핑 (데이터베이스 img_id와 매치) - 상수이므로 변경되지 않음
   const PHOTO_FILE_NAMES = useMemo(
@@ -267,11 +305,42 @@ export default function WeddingInvitation() {
     },
   ]);
 
-  const weddingDate = new Date("2025-12-20T15:20:00");
-  const currentDate = new Date();
-  const daysUntil = Math.ceil(
-    (weddingDate.getTime() - currentDate.getTime()) / (1000 * 3600 * 24)
-  );
+  const weddingDate = useMemo(() => new Date("2025-12-20T15:20:00"), []);
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  // 실시간 카운트다운 계산
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const currentDate = new Date();
+      const difference = weddingDate.getTime() - currentDate.getTime();
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((difference / 1000 / 60) % 60);
+        const seconds = Math.floor((difference / 1000) % 60);
+
+        setTimeLeft({ days, hours, minutes, seconds });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    // 즉시 실행
+    calculateTimeLeft();
+
+    // 1초마다 업데이트
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, [weddingDate]);
+
+  const daysUntil = timeLeft.days;
 
   // 방명록 데이터 로드
   const fetchGuestbook = useCallback(async () => {
@@ -283,6 +352,8 @@ export default function WeddingInvitation() {
       if (response.ok) {
         const data = await response.json();
         setGuestbookEntries(data);
+        // 새 데이터 로드 시 첫 페이지로 이동
+        setCurrentPage(0);
       } else {
         console.error("방명록 로드 실패");
         setGuestbookEntries([]);
@@ -325,31 +396,6 @@ export default function WeddingInvitation() {
     }
   };
 
-  // 터치 스와이프 함수들
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(0); // 이전 터치 종료값 초기화
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-    const maxPage = Math.ceil(guestbookEntries.length / itemsPerPage) - 1;
-
-    if (isLeftSwipe && currentPage < maxPage) {
-      setCurrentPage(currentPage + 1);
-    }
-    if (isRightSwipe && currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
   // 갤러리 사진 데이터와 좋아요 수 로드
   const fetchPhotosWithLikes = useCallback(async () => {
     try {
@@ -662,7 +708,7 @@ export default function WeddingInvitation() {
   }, [fetchGuestbook, fetchPhotosWithLikes]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-stone-100 to-amber-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section - 메인 이미지 */}
       <div className="relative h-screen w-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -674,7 +720,7 @@ export default function WeddingInvitation() {
       </div>
 
       {/* PC & Mobile Navigation */}
-      <nav className="sticky top-0 bg-white/90 backdrop-blur-md shadow-sm z-50 border-b border-stone-200">
+      <nav className="sticky top-0 bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-gray-200">
         {/* PC Navigation - 큰 화면에서만 표시 */}
         <div className="hidden md:block">
           <div className="max-w-4xl mx-auto px-8 py-4">
@@ -789,7 +835,7 @@ export default function WeddingInvitation() {
             </div>
 
             {/* D-Day Counter */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 mx-auto max-w-xs shadow-lg">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-3 mx-auto max-w-xs shadow-lg border border-gray-200">
               <div className="text-gray-800 text-sm mb-1 font-medium">
                 결혼식까지
               </div>
@@ -807,7 +853,7 @@ export default function WeddingInvitation() {
         <section id="info" className="px-0 md:px-8 mb-20 md:mb-32">
           <div className="space-y-8 md:space-y-12">
             {/* Invitation Message */}
-            <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-12 text-center max-w-3xl mx-auto shadow-lg">
+            <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-12 text-center max-w-3xl mx-auto shadow-sm border border-gray-100">
               <div className="text-2xl md:text-3xl font-light text-gray-800 mb-6">
                 INVITATION
               </div>
@@ -836,60 +882,367 @@ export default function WeddingInvitation() {
               </div>
             </div>
 
-            {/* 신랑신부 정보 */}
-            <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-10 max-w-3xl mx-auto shadow-lg">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16">
-                <div className="text-center">
-                  <div className="text-sm text-gray-500 mb-2">신랑측</div>
-                  <div className="text-gray-800 mb-4">
-                    <div className="text-xs md:text-sm text-gray-600 mb-1">
-                      박문식 · 노영임
-                    </div>
-                    <div className="text-sm text-gray-500">의아들</div>
-                  </div>
-                  <div className="text-2xl md:text-3xl font-light text-gray-800">
-                    용준
-                  </div>
-                  <div className="text-lg md:text-xl text-gray-800 mt-2">
-                    박용준
-                  </div>
-                  <button className="mt-3 text-gray-500 text-xs md:text-sm hover:text-gray-800 transition-colors">
-                    전화로 축하 인사하기{" "}
-                    <Phone className="w-3 h-3 inline ml-1" />
-                  </button>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-gray-500 mb-2">신부측</div>
-                  <div className="text-gray-800 mb-4">
-                    <div className="text-xs md:text-sm text-gray-600 mb-1">
-                      김도수 · 박언자
-                    </div>
-                    <div className="text-sm text-gray-500">의딸</div>
-                  </div>
-                  <div className="text-2xl md:text-3xl font-light text-gray-800">
-                    이슬
-                  </div>
-                  <div className="text-lg md:text-xl text-gray-800 mt-2">
-                    김이슬
-                  </div>
-                  <button className="mt-3 text-gray-500 text-xs md:text-sm hover:text-gray-800 transition-colors">
-                    전화로 축하 인사하기{" "}
-                    <Phone className="w-3 h-3 inline ml-1" />
-                  </button>
+            {/* 웨딩 이미지 섹션 */}
+            <div
+              ref={weddingImageRef}
+              className={`transition-all duration-1000 ${
+                weddingImageVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-10"
+              }`}
+            >
+              <div className="max-w-2xl mx-auto">
+                <div className="relative overflow-hidden">
+                  <Image
+                    src="/img/gray_front.PNG"
+                    alt="Wedding Moment"
+                    width={800}
+                    height={450}
+                    className="w-full h-auto object-cover"
+                    style={{ aspectRatio: "16/9" }}
+                    priority
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Wedding Day Info */}
-            <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-2xl mx-auto shadow-lg">
-              <div className="text-xl md:text-2xl font-light text-gray-800 mb-4">
-                WEDDING DAY
+            {/* 달력 & 카운트다운 섹션 */}
+            <div
+              ref={calendarRef}
+              className={`bg-white rounded-none md:rounded-2xl p-6 md:p-10 max-w-md mx-auto shadow-sm border border-gray-100 transition-all duration-1000 ${
+                calendarVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-10"
+              }`}
+            >
+              <div className="text-center space-y-6">
+                {/* 날짜 표시 */}
+                <div className="space-y-2">
+                  <div className="text-2xl font-light text-gray-800 tracking-wider">
+                    2025.12.20
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    토요일 오후 3시 20분
+                  </div>
+                </div>
+
+                {/* 달력 */}
+                <div className="py-6">
+                  {/* 요일 헤더 */}
+                  <div className="grid grid-cols-7 gap-1 mb-4">
+                    {["일", "월", "화", "수", "목", "금", "토"].map(
+                      (day, index) => (
+                        <div
+                          key={day}
+                          className={`w-8 h-8 flex items-center justify-center text-xs font-medium ${
+                            index === 0
+                              ? "text-red-400"
+                              : index === 6
+                              ? "text-blue-400"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          {day}
+                        </div>
+                      )
+                    )}
+                  </div>
+
+                  {/* 달력 그리드 */}
+                  <div className="grid grid-cols-7 gap-1">
+                    {/* 2025년 12월 달력 생성 */}
+                    {(() => {
+                      const year = 2025;
+                      const month = 11; // 12월 (0부터 시작)
+                      const firstDay = new Date(year, month, 1).getDay(); // 12월 1일 요일 (일요일=0)
+                      const daysInMonth = new Date(
+                        year,
+                        month + 1,
+                        0
+                      ).getDate(); // 12월의 총 일수
+                      const calendarDays = [];
+
+                      // 이전 달의 빈 칸들 추가
+                      for (let i = 0; i < firstDay; i++) {
+                        calendarDays.push(
+                          <div key={`empty-${i}`} className="w-8 h-8"></div>
+                        );
+                      }
+
+                      // 12월 날짜들 추가
+                      for (let date = 1; date <= daysInMonth; date++) {
+                        const currentDate = new Date(year, month, date);
+                        const dayOfWeek = currentDate.getDay();
+                        const isWeddingDay = date === 20;
+                        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 일요일(0) 또는 토요일(6)
+                        const isSunday = dayOfWeek === 0;
+
+                        calendarDays.push(
+                          <div
+                            key={date}
+                            className={`
+                              relative w-8 h-8 flex items-center justify-center text-sm font-medium
+                              ${
+                                isWeddingDay
+                                  ? "bg-red-400 text-white rounded-full shadow-lg"
+                                  : isSunday
+                                  ? "text-red-400"
+                                  : isWeekend
+                                  ? "text-blue-400"
+                                  : "text-gray-700"
+                              }
+                              ${isWeddingDay ? "animate-pulse z-10" : ""}
+                              transition-all duration-200
+                            `}
+                          >
+                            {date}
+                            {isWeddingDay && (
+                              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      return calendarDays;
+                    })()}
+                  </div>
+                </div>
+
+                {/* 실시간 카운트다운 */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-4 gap-3 text-center">
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:bg-gray-100 transition-colors">
+                      <div className="text-xl font-bold text-gray-800">
+                        {timeLeft.days}
+                      </div>
+                      <div className="text-xs text-gray-500 font-medium">
+                        DAY
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:bg-gray-100 transition-colors">
+                      <div className="text-xl font-bold text-gray-800">
+                        {timeLeft.hours.toString().padStart(2, "0")}
+                      </div>
+                      <div className="text-xs text-gray-500 font-medium">
+                        HOUR
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:bg-gray-100 transition-colors">
+                      <div className="text-xl font-bold text-gray-800">
+                        {timeLeft.minutes.toString().padStart(2, "0")}
+                      </div>
+                      <div className="text-xs text-gray-500 font-medium">
+                        MIN
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:bg-gray-100 transition-colors">
+                      <div className="text-xl font-bold text-red-400">
+                        {timeLeft.seconds.toString().padStart(2, "0")}
+                      </div>
+                      <div className="text-xs text-gray-500 font-medium">
+                        SEC
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* D-Day 메시지 */}
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 leading-relaxed">
+                      용준, 이슬의 결혼식이
+                      <br />
+                      <span className="text-red-400 font-medium text-base">
+                        {timeLeft.days}일
+                      </span>{" "}
+                      남았습니다. 💕
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-2xl md:text-3xl font-medium text-gray-800 mb-2">
-                2025.12.20. 토요일 오후 3:20
-              </div>
-              <div className="text-lg md:text-xl text-gray-600">
-                르비르모어 2층 단독홀
+            </div>
+
+            {/* 신랑신부 정보 */}
+            <div
+              ref={coupleInfoRef}
+              className={`bg-white rounded-none md:rounded-2xl p-6 md:p-10 max-w-5xl mx-auto shadow-sm border border-gray-100 transition-all duration-1000 ${
+                coupleInfoVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-10"
+              }`}
+            >
+              <div className="grid grid-cols-2 gap-8 md:gap-16">
+                {/* 신랑측 */}
+                <div className="text-center space-y-6">
+                  <div className="text-lg font-medium text-gray-800 mb-6">
+                    신랑
+                  </div>
+
+                  {/* 신랑 정보 */}
+                  <div className="space-y-3">
+                    <div className="text-2xl md:text-3xl font-light text-gray-800">
+                      용준
+                    </div>
+                    <div className="text-lg text-gray-600">박용준</div>
+                    <div className="flex justify-center space-x-4 mt-3">
+                      <button
+                        onClick={() => window.open("tel:010-1234-5678")}
+                        className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                        title="전화걸기"
+                      >
+                        <Phone className="w-5 h-5 text-gray-600" />
+                      </button>
+                      <button
+                        onClick={() => window.open("sms:010-1234-5678")}
+                        className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                        title="문자보내기"
+                      >
+                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 삼각형 구분선 */}
+                  <div className="flex justify-center">
+                    <div className="w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-300"></div>
+                  </div>
+
+                  {/* 신랑 측 혼주 */}
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-500">신랑 측 혼주</div>
+
+                    {/* 아버지 */}
+                    <div className="space-y-2">
+                      <div className="text-base text-gray-700">
+                        아버지 박문식
+                      </div>
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={() => window.open("tel:010-9876-5432")}
+                          className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors"
+                          title="전화걸기"
+                        >
+                          <Phone className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => window.open("sms:010-9876-5432")}
+                          className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors"
+                          title="문자보내기"
+                        >
+                          <MessageCircle className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 어머니 */}
+                    <div className="space-y-2">
+                      <div className="text-base text-gray-700">
+                        어머니 노영임
+                      </div>
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={() => window.open("tel:010-8765-4321")}
+                          className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors"
+                          title="전화걸기"
+                        >
+                          <Phone className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => window.open("sms:010-8765-4321")}
+                          className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors"
+                          title="문자보내기"
+                        >
+                          <MessageCircle className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 신부측 */}
+                <div className="text-center space-y-6">
+                  <div className="text-lg font-medium text-gray-800 mb-6">
+                    신부
+                  </div>
+
+                  {/* 신부 정보 */}
+                  <div className="space-y-3">
+                    <div className="text-2xl md:text-3xl font-light text-gray-800">
+                      이슬
+                    </div>
+                    <div className="text-lg text-gray-600">김이슬</div>
+                    <div className="flex justify-center space-x-4 mt-3">
+                      <button
+                        onClick={() => window.open("tel:010-2468-1357")}
+                        className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                        title="전화걸기"
+                      >
+                        <Phone className="w-5 h-5 text-gray-600" />
+                      </button>
+                      <button
+                        onClick={() => window.open("sms:010-2468-1357")}
+                        className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+                        title="문자보내기"
+                      >
+                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 삼각형 구분선 */}
+                  <div className="flex justify-center">
+                    <div className="w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-300"></div>
+                  </div>
+
+                  {/* 신부 측 혼주 */}
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-500">신부 측 혼주</div>
+
+                    {/* 아버지 */}
+                    <div className="space-y-2">
+                      <div className="text-base text-gray-700">
+                        아버지 김도수
+                      </div>
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={() => window.open("tel:010-1357-2468")}
+                          className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors"
+                          title="전화걸기"
+                        >
+                          <Phone className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => window.open("sms:010-1357-2468")}
+                          className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors"
+                          title="문자보내기"
+                        >
+                          <MessageCircle className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 어머니 */}
+                    <div className="space-y-2">
+                      <div className="text-base text-gray-700">
+                        어머니 박언자
+                      </div>
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={() => window.open("tel:010-3691-2580")}
+                          className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors"
+                          title="전화걸기"
+                        >
+                          <Phone className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => window.open("sms:010-3691-2580")}
+                          className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors"
+                          title="문자보내기"
+                        >
+                          <MessageCircle className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -897,7 +1250,7 @@ export default function WeddingInvitation() {
 
         {/* Gallery Section */}
         <section id="gallery" className="px-0 md:px-8 mb-20 md:mb-32">
-          <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-4xl mx-auto shadow-lg">
+          <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-4xl mx-auto shadow-sm border border-gray-100">
             <div className="text-xl md:text-2xl font-light text-gray-800 mb-4">
               GALLERY
             </div>
@@ -947,7 +1300,7 @@ export default function WeddingInvitation() {
             </div>
 
             <button
-              className="px-6 py-3 bg-gray-800 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors"
+              className="px-6 py-3 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors border border-gray-300"
               onClick={() => openGalleryModal(0)}
             >
               사진 더보기
@@ -955,93 +1308,193 @@ export default function WeddingInvitation() {
           </div>
         </section>
         {/* Account Section */}
-        <section id="account" className="px-0 md:px-8 mb-20 md:mb-32">
-          <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-4xl mx-auto shadow-lg">
-            <h2 className="text-2xl md:text-3xl font-medium text-gray-800 mb-6">
+        <section id="account" className="py-16 px-4">
+          <div
+            ref={accountRef}
+            className={`max-w-md mx-auto text-center transition-all duration-1000 ${
+              accountVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-10"
+            }`}
+          >
+            {/* 구분선 */}
+            <div className="w-16 h-0.5 bg-black mx-auto mb-8"></div>
+
+            <h2 className="text-lg font-medium text-gray-800 mb-4">
               마음 전하실 곳
             </h2>
-            <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-8">
-              저희 두 사람의 소중한 시작을 축하해주시는 모든 분들께
-              감사드립니다.
-              <br />
-              따뜻한 진심을 감사히 오래도록 간직하고 행복하게 잘 살겠습니다.
-            </p>
+            <div className="text-gray-600 text-sm leading-relaxed mb-12 space-y-1">
+              <p>참석이 어려우신 분들을 위해 기재했습니다</p>
+              <p>너그러운 마음으로 양해 부탁드립니다</p>
+            </div>
 
-            <div className="space-y-8 md:space-y-10 text-left">
-              <div>
-                <h3 className="text-gray-800 font-medium mb-4 text-center text-lg md:text-xl">
-                  신랑측
-                </h3>
-                <div className="space-y-3 md:space-y-4">
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-800 text-sm md:text-base">
-                        신랑 <strong>박용준</strong>
-                      </span>
-                      <div className="text-right">
-                        <div className="text-gray-600 text-xs md:text-sm">
-                          국민 123-456-789012
+            <div className="space-y-4">
+              {/* 신랑측에게 드롭다운 */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setGroomDropdownOpen(!groomDropdownOpen)}
+                  className="w-full p-4 flex justify-between items-center bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <span className="text-gray-700 font-medium">신랑측에게</span>
+                  <ChevronRight
+                    className={`w-5 h-5 text-gray-400 transition-transform ${
+                      groomDropdownOpen ? "rotate-90" : ""
+                    }`}
+                  />
+                </button>
+                {groomDropdownOpen && (
+                  <div className="p-4 space-y-3 bg-gray-50">
+                    {/* 신랑 */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="text-sm text-gray-600">신랑</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          박용준
                         </div>
-                        <button className="text-blue-500 text-xs hover:text-blue-600">
-                          복사
-                        </button>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="text-xs text-gray-500">토스뱅크</div>
+                        <div className="flex items-center gap-2">
+                          <Copy className="w-4 h-4 text-gray-400" />
+                          <div className="w-8 h-6 bg-yellow-400 rounded text-black text-xs flex items-center justify-center font-bold">
+                            Pay
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        123-456-789012
+                      </div>
+                    </div>
+
+                    {/* 신랑 아버지 */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="text-sm text-gray-600">신랑 아버지</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          박문식
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="text-xs text-gray-500">토스뱅크</div>
+                        <div className="flex items-center gap-2">
+                          <Copy className="w-4 h-4 text-gray-400" />
+                          <div className="w-8 h-6 bg-yellow-400 rounded text-black text-xs flex items-center justify-center font-bold">
+                            Pay
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        123-456-789012
+                      </div>
+                    </div>
+
+                    {/* 신랑 어머니 */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="text-sm text-gray-600">신랑 어머니</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          김영숙
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="text-xs text-gray-500">토스뱅크</div>
+                        <div className="flex items-center gap-2">
+                          <Copy className="w-4 h-4 text-gray-400" />
+                          <div className="w-8 h-6 bg-yellow-400 rounded text-black text-xs flex items-center justify-center font-bold">
+                            Pay
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        123-456-789012
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-800 text-sm md:text-base">
-                        혼주 <strong>박문식</strong>
-                      </span>
-                      <div className="text-right">
-                        <div className="text-gray-600 text-xs md:text-sm">
-                          NH농협 123-4567-890123
-                        </div>
-                        <button className="text-blue-500 text-xs hover:text-blue-600">
-                          복사
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
 
-              <div>
-                <h3 className="text-gray-800 font-medium mb-4 text-center text-lg md:text-xl">
-                  신부측
-                </h3>
-                <div className="space-y-3 md:space-y-4">
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-800 text-sm md:text-base">
-                        신부 <strong>김이슬</strong>
-                      </span>
-                      <div className="text-right">
-                        <div className="text-gray-600 text-xs md:text-sm">
-                          카카오뱅크 123-4567-890123
+              {/* 신부측에게 드롭다운 */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setBrideDropdownOpen(!brideDropdownOpen)}
+                  className="w-full p-4 flex justify-between items-center bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <span className="text-gray-700 font-medium">신부측에게</span>
+                  <ChevronRight
+                    className={`w-5 h-5 text-gray-400 transition-transform ${
+                      brideDropdownOpen ? "rotate-90" : ""
+                    }`}
+                  />
+                </button>
+                {brideDropdownOpen && (
+                  <div className="p-4 space-y-3 bg-gray-50">
+                    {/* 신부 */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="text-sm text-gray-600">신부</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          김이슬
                         </div>
-                        <button className="text-pink-500 text-xs hover:text-pink-600">
-                          복사
-                        </button>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="text-xs text-gray-500">토스뱅크</div>
+                        <div className="flex items-center gap-2">
+                          <Copy className="w-4 h-4 text-gray-400" />
+                          <div className="w-8 h-6 bg-yellow-400 rounded text-black text-xs flex items-center justify-center font-bold">
+                            Pay
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        123-456-789012
+                      </div>
+                    </div>
+
+                    {/* 신부 아버지 */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="text-sm text-gray-600">신부 아버지</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          김도수
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="text-xs text-gray-500">토스뱅크</div>
+                        <div className="flex items-center gap-2">
+                          <Copy className="w-4 h-4 text-gray-400" />
+                          <div className="w-8 h-6 bg-yellow-400 rounded text-black text-xs flex items-center justify-center font-bold">
+                            Pay
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        123-456-789012
+                      </div>
+                    </div>
+
+                    {/* 신부 어머니 */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="text-sm text-gray-600">신부 어머니</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          이영희
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="text-xs text-gray-500">토스뱅크</div>
+                        <div className="flex items-center gap-2">
+                          <Copy className="w-4 h-4 text-gray-400" />
+                          <div className="w-8 h-6 bg-yellow-400 rounded text-black text-xs flex items-center justify-center font-bold">
+                            Pay
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        123-456-789012
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-800 text-sm md:text-base">
-                        혼주 <strong>김도수</strong>
-                      </span>
-                      <div className="text-right">
-                        <div className="text-gray-600 text-xs md:text-sm">
-                          하나 123-4567-890123
-                        </div>
-                        <button className="text-pink-500 text-xs hover:text-pink-600">
-                          복사
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -1049,7 +1502,14 @@ export default function WeddingInvitation() {
 
         {/* Location Section */}
         <section id="location" className="px-0 md:px-8 mb-20 md:mb-32">
-          <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-3xl mx-auto shadow-lg">
+          <div
+            ref={locationRef}
+            className={`bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-3xl mx-auto shadow-sm border border-gray-100 transition-all duration-1000 ${
+              locationVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-10"
+            }`}
+          >
             <div className="text-xl md:text-2xl font-light text-gray-800 mb-4">
               LOCATION
             </div>
@@ -1156,7 +1616,7 @@ export default function WeddingInvitation() {
                     "_blank"
                   )
                 }
-                className="py-3 md:py-4 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors text-sm md:text-base"
+                className="py-3 md:py-4 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors text-sm md:text-base border border-gray-300"
               >
                 <MapPin className="w-4 h-4 md:w-5 md:h-5 inline mr-1 md:mr-2" />
                 네이버 길찾기
@@ -1168,7 +1628,7 @@ export default function WeddingInvitation() {
                     "_blank"
                   )
                 }
-                className="py-3 md:py-4 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors text-sm md:text-base"
+                className="py-3 md:py-4 bg-gray-500 text-white rounded-xl font-medium hover:bg-gray-600 transition-colors text-sm md:text-base border border-gray-300"
               >
                 <MapPin className="w-4 h-4 md:w-5 md:h-5 inline mr-1 md:mr-2" />
                 T맵 길찾기
@@ -1179,170 +1639,156 @@ export default function WeddingInvitation() {
 
         {/* Guestbook Section */}
         <section id="guestbook" className="px-0 md:px-8 mb-20 md:mb-32">
-          <div className="bg-white rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-4xl mx-auto shadow-lg">
-            <div className="text-lg font-light text-rose-400 mb-4 tracking-widest">
-              WEDDING GUESTBOOK
+          <div
+            ref={guestbookRef}
+            className={`bg-gray-50 rounded-none md:rounded-2xl p-6 md:p-8 text-center max-w-2xl mx-auto transition-all duration-1000 ${
+              guestbookVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-10"
+            }`}
+          >
+            <div className="text-4xl font-light text-gray-800 mb-6 tracking-wider">
+              MESSAGE
             </div>
-            <h2 className="text-2xl font-medium text-gray-800 mb-6">
-              축하 메시지
-            </h2>
-            <p className="text-gray-600 text-sm mb-8 leading-relaxed">
-              두 사람의 특별한 날을 함께 축하해주세요 💕
-              <br />
-              따뜻한 마음이 담긴 메시지를 남겨주시면 감사하겠습니다.
+            <p className="text-gray-600 text-base mb-8 leading-relaxed">
+              저희 둘에게 따뜻한 방명록을 남겨주세요
             </p>
 
             <button
               onClick={() => setIsModalOpen(true)}
-              className="w-full py-4 bg-gradient-to-r from-rose-100 to-pink-100 border border-rose-200 text-rose-700 rounded-xl font-medium hover:from-rose-200 hover:to-pink-200 hover:border-rose-300 transition-all duration-300 mb-6 shadow-sm hover:shadow-md"
+              className="w-full py-4 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600 transition-all duration-300 mb-8"
             >
-              💌 축하 메시지 남기기
+              메시지 남기기
             </button>
 
-            {isLoading ? (
-              <div className="text-center py-8">
-                <div className="text-gray-600">방명록을 불러오는 중...</div>
-              </div>
-            ) : guestbookEntries.length > 0 ? (
-              <div className="relative">
-                {/* 방명록 카드 컨테이너 */}
-                <div className="overflow-hidden rounded-2xl">
-                  <div
-                    className="flex transition-transform duration-300 ease-out"
-                    style={{
-                      transform: `translateX(-${currentPage * 100}%)`,
-                    }}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
-                  >
-                    {Array.from({
-                      length: Math.ceil(guestbookEntries.length / itemsPerPage),
-                    }).map((_, pageIndex) => (
-                      <div key={pageIndex} className="w-full flex-shrink-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left p-2">
-                          {guestbookEntries
-                            .slice(
-                              pageIndex * itemsPerPage,
-                              (pageIndex + 1) * itemsPerPage
-                            )
-                            .map((entry) => (
-                              <div
-                                key={entry.idx}
-                                className="relative bg-gradient-to-br from-rose-50 via-pink-50 to-white p-6 rounded-2xl border border-rose-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
-                              >
-                                {/* 작은 하트 장식 */}
-                                <div className="absolute top-3 right-3 text-rose-300 text-sm">
-                                  💕
-                                </div>
-
-                                <div className="space-y-4">
-                                  {/* 메시지 */}
-                                  <div className="bg-white/70 p-4 rounded-xl border border-rose-100">
-                                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap italic">
-                                      &ldquo;{entry.content}&rdquo;
-                                    </p>
-                                  </div>
-
-                                  {/* From 서명 */}
-                                  <div className="flex justify-end items-center">
-                                    <div className="flex items-center space-x-2 text-rose-600">
-                                      <div className="w-8 h-px bg-rose-300"></div>
-                                      <span className="text-xs font-medium">
-                                        {entry.name}
-                                      </span>
-                                      <div className="text-rose-400 text-xs">
-                                        ♡
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            {/* 메시지 목록 */}
+            <div className="space-y-4">
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-600">방명록을 불러오는 중...</div>
                 </div>
-
-                {/* 페이지네이션 */}
-                {Math.ceil(guestbookEntries.length / itemsPerPage) > 1 && (
-                  <div className="flex justify-center items-center mt-8 space-x-4">
-                    <button
-                      onClick={() =>
-                        setCurrentPage(Math.max(0, currentPage - 1))
-                      }
-                      disabled={currentPage === 0}
-                      className="p-2 text-rose-300 hover:text-rose-500 disabled:opacity-30 transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-
-                    <div className="flex space-x-2 items-center">
-                      {Array.from({
-                        length: Math.ceil(
-                          guestbookEntries.length / itemsPerPage
-                        ),
-                      }).map((_, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setCurrentPage(index)}
-                          className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                            currentPage === index
-                              ? "bg-rose-400 scale-125"
-                              : "bg-rose-200 hover:bg-rose-300"
+              ) : guestbookEntries.length > 0 ? (
+                <div className="space-y-6">
+                  {/* 현재 페이지의 메시지들 */}
+                  <div className="space-y-4">
+                    {guestbookEntries
+                      .slice(
+                        currentPage * itemsPerPage,
+                        (currentPage + 1) * itemsPerPage
+                      )
+                      .map((entry, index) => (
+                        <div
+                          key={entry.idx}
+                          className={`bg-white rounded-lg p-6 shadow-sm border border-gray-100 text-left transition-all ${
+                            guestbookVisible
+                              ? "opacity-100 translate-y-0"
+                              : "opacity-0 translate-y-10"
                           }`}
-                        />
+                          style={{
+                            transitionDelay: guestbookVisible
+                              ? `${(index + 2) * 100}ms`
+                              : "0ms",
+                            transitionDuration: "600ms",
+                          }}
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-start space-x-3">
+                              <div className="text-xl">😊</div>
+                              <div className="flex-1">
+                                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                                  {entry.content}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-xs text-gray-400 whitespace-nowrap ml-4">
+                              2025.04.24 18:52
+                            </div>
+                          </div>
+                          <div className="flex justify-start">
+                            <span className="text-xs text-gray-500">
+                              From {entry.name}
+                            </span>
+                          </div>
+                        </div>
                       ))}
-                    </div>
+                  </div>
 
-                    <button
-                      onClick={() =>
-                        setCurrentPage(
-                          Math.min(
-                            Math.ceil(guestbookEntries.length / itemsPerPage) -
-                              1,
-                            currentPage + 1
+                  {/* 페이지네이션 */}
+                  {Math.ceil(guestbookEntries.length / itemsPerPage) > 1 && (
+                    <div className="flex justify-center items-center space-x-4 pt-6">
+                      <button
+                        onClick={() =>
+                          setCurrentPage(Math.max(0, currentPage - 1))
+                        }
+                        disabled={currentPage === 0}
+                        className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+
+                      <div className="flex space-x-2 items-center">
+                        {Array.from({
+                          length: Math.ceil(
+                            guestbookEntries.length / itemsPerPage
+                          ),
+                        }).map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentPage(index)}
+                            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                              currentPage === index
+                                ? "bg-gray-500 scale-125"
+                                : "bg-gray-300 hover:bg-gray-400"
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          setCurrentPage(
+                            Math.min(
+                              Math.ceil(
+                                guestbookEntries.length / itemsPerPage
+                              ) - 1,
+                              currentPage + 1
+                            )
                           )
-                        )
-                      }
-                      disabled={
-                        currentPage ===
-                        Math.ceil(guestbookEntries.length / itemsPerPage) - 1
-                      }
-                      className="p-2 text-rose-300 hover:text-rose-500 disabled:opacity-30 transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
+                        }
+                        disabled={
+                          currentPage ===
+                          Math.ceil(guestbookEntries.length / itemsPerPage) - 1
+                        }
+                        className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-4">💌</div>
+                  <div className="text-gray-600 text-lg font-medium mb-2">
+                    첫 번째 축하 메시지를 기다리고 있어요
                   </div>
-                )}
-
-                {/* 메시지 개수 */}
-                <div className="text-center mt-6">
-                  <div className="inline-flex items-center bg-rose-50 px-4 py-2 rounded-full border border-rose-100">
-                    <span className="text-rose-400 mr-1">💕</span>
-                    <span className="text-xs text-rose-600 font-medium">
-                      {guestbookEntries.length}개의 축하 메시지
-                    </span>
-                    <span className="text-rose-400 ml-1">💕</span>
+                  <div className="text-gray-500 text-sm">
+                    소중한 마음을 전해주세요
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="text-5xl mb-4">💌</div>
-                <div className="text-rose-500 text-lg font-medium mb-2">
-                  첫 번째 축하 메시지를 기다리고 있어요
-                </div>
-                <div className="text-rose-400 text-sm">
-                  소중한 마음을 전해주세요
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </section>
 
-        <footer className="text-center mt-12 px-0 md:px-4 py-8 bg-white rounded-none md:rounded-2xl shadow-lg">
+        <footer
+          ref={footerRef}
+          className={`text-center mt-12 px-0 md:px-4 py-8 bg-white rounded-none md:rounded-2xl shadow-sm border border-gray-100 transition-all duration-1000 ${
+            footerVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-10"
+          }`}
+        >
           <div className="text-gray-800 text-lg font-medium mb-2">
             언제나 곁을 따뜻하게 지켜주신 모든 분들께 감사드립니다.
           </div>
@@ -1351,10 +1797,10 @@ export default function WeddingInvitation() {
           </div>
 
           <div className="flex justify-center space-x-4 mb-6">
-            <button className="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-medium hover:bg-yellow-600 transition-colors">
+            <button className="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors border border-gray-300">
               카카오톡 공유하기
             </button>
-            <button className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+            <button className="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors border border-gray-300">
               링크 복사하기
             </button>
           </div>
