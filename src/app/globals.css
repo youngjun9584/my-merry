@@ -341,13 +341,18 @@ body {
 
 /* 디데이 카운터 스타일 */
 .dday-bg {
-  background-color: #f9fafb;
+  background-color: rgba(250, 248, 248, var(--tw-bg-opacity));
   border-color: #e5e7eb;
+}
+
+.dday-text {
+  color: rgba(173, 134, 139, var(--tw-text-opacity));
 }
 
 .CormorantInfant-Medium {
   font-family: "Cormorant Infant", serif;
   font-weight: 500;
+  color: rgba(173, 134, 139, var(--tw-text-opacity));
 }
 
 .colonmb {
