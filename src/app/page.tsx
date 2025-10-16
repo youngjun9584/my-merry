@@ -170,7 +170,11 @@ function WeddingInvitationContent() {
 
   // BGM 재생 관련 상태
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  // 슬라이드 관련 상태
+  const slideRef = useRef<HTMLDivElement>(null);
+  const [slidePosition, setSlidePosition] = useState(0);
 
   // 방명록 관련 상태
   interface GuestbookEntry {
@@ -299,15 +303,92 @@ function WeddingInvitationContent() {
     const playBGM = async () => {
       if (audioRef.current) {
         try {
+          // 음소거 상태로 먼저 재생 시도 (브라우저 정책 우회)
+          audioRef.current.muted = true;
           await audioRef.current.play();
-          setIsPlaying(true);
+
+          // 즉시 음소거 해제 및 볼륨 설정
+          setTimeout(() => {
+            if (audioRef.current) {
+              audioRef.current.muted = false;
+              audioRef.current.volume = 0.5;
+              setIsPlaying(true);
+              console.log("✅ BGM 자동 재생 성공");
+            }
+          }, 100);
         } catch (error) {
-          console.log("자동 재생이 차단되었습니다:", error);
-          // 브라우저에서 자동 재생이 차단된 경우
+          console.log("⚠️ 자동 재생 차단:", error);
+          // 차단된 경우 사용자 인터랙션 대기
+          if (audioRef.current) {
+            audioRef.current.muted = false;
+            audioRef.current.volume = 0.5;
+          }
         }
       }
     };
+
+    // 페이지 로드 후 여러 시점에 재생 시도
     playBGM();
+    setTimeout(playBGM, 100);
+    setTimeout(playBGM, 300);
+    setTimeout(playBGM, 500);
+
+    // 사용자 인터랙션 시 재생 (폴백)
+    const handleInteraction = () => {
+      if (audioRef.current && audioRef.current.paused) {
+        audioRef.current.muted = false;
+        audioRef.current.volume = 0.5;
+        audioRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+            console.log("✅ 사용자 인터랙션으로 BGM 재생");
+          })
+          .catch((err) => {
+            console.log("재생 오류:", err);
+          });
+      }
+    };
+
+    // 모든 가능한 이벤트에 리스너 등록
+    const events = [
+      "click",
+      "touchstart",
+      "touchmove",
+      "mousemove",
+      "scroll",
+      "keydown",
+      "mousedown",
+      "touchend",
+    ];
+
+    events.forEach((event) => {
+      document.addEventListener(event, handleInteraction, { once: true });
+    });
+
+    return () => {
+      events.forEach((event) => {
+        document.removeEventListener(event, handleInteraction);
+      });
+    };
+  }, []);
+
+  // 슬라이드 자동 애니메이션
+  useEffect(() => {
+    const slideInterval = setInterval(() => {
+      setSlidePosition((prev) => {
+        // 이미지 6개 * (너비 w-48=192px + gap-3=12px) = 204px per image
+        const totalWidth = 6 * 204;
+        // 한 세트의 너비만큼 이동했으면 리셋
+        if (Math.abs(prev) >= totalWidth) {
+          return 0;
+        }
+        // 0.5px씩 왼쪽으로 이동 (더 부드럽게)
+        return prev - 0.5;
+      });
+    }, 20); // 20ms마다 업데이트
+
+    return () => clearInterval(slideInterval);
   }, []);
 
   // Intersection Observer for scroll animations
@@ -388,14 +469,36 @@ function WeddingInvitationContent() {
 
   // 갤러리 사진 데이터 (로컬 이미지 사용)
   const photos = [
-    "/img/IMG_4981.jpg",
-    "/img/IMG_4981-1.jpg",
-    "/img/IMG_4981-2.jpg",
-    "/img/IMG_4981-3.jpg",
-    "/img/gray_front.PNG",
-    "/img/kim.jpg",
-    "/img/park.jpg",
-    "/img/time.PNG",
+    "/img/gallery/P20251004_215349035_9E4B5175-0F85-46C0-8A5B-7A5472BCAC45-min.jpg",
+    "/img/gallery/IMG_6303-min.JPG",
+    "/img/gallery/IMG_6080-min.JPG",
+    "/img/gallery/IMG_5282-min.JPG",
+    "/img/gallery/IMG_5127-min.JPG",
+    "/img/gallery/IMG_5097-min.JPG",
+    "/img/gallery/09 IMG_7234-1-min.jpg",
+    "/img/gallery/07 IMG_7758 (와이드)-1-min.jpg",
+    "/img/gallery/06 IMG_5566 (와이드) 신랑님배쪽셔츠검정색으로칠하기-1-min.jpg",
+    "/img/gallery/P20251010_012042380_BC0C02E1-86F8-4A2D-B8E0-C1E2F1490E00.JPG",
+    "/img/gallery/P20251010_011148716_EB1223AE-C40B-4857-95B8-2B01767F3446.jpg",
+    "/img/gallery/P20251005_163116204_1E6F3DBE-BBB3-4A4C-BF4A-D9B1E193BDFF.jpg",
+    "/img/gallery/P20251005_160448777_4FC8E0AB-C86E-486A-8E40-69307DA98AB9.jpg",
+    "/img/gallery/P20251005_103350435_7B3E138A-9DA6-48D5-863A-CD72783A33B7.jpg",
+    "/img/gallery/P20251005_101129785_004F8CA8-DFD6-4288-9C31-5944B156DE80.jpg",
+    "/img/gallery/P20251005_025851535_8AF203BC-C22D-483E-A8E9-700A6157FB56.jpg",
+    "/img/gallery/P20251005_010808966_AEB52A48-AD47-4E41-AB1C-F132783309B3.jpg",
+    "/img/gallery/P20251005_005926263_61E0A4DB-D9A0-4268-A74D-882125A0C356.jpg",
+    "/img/gallery/P20251005_005410178_76F0CAD2-FF46-4F01-84F3-13AA7DC38C78.jpg",
+    "/img/gallery/P20251005_002830479_157FC939-8554-4D3F-A313-4BAE09CD0569.jpg",
+    "/img/gallery/P20251005_001013979_1B546E8A-46D8-4828-9959-33C3CF4B8E32.jpg",
+    "/img/gallery/P20251004_235537481_1083E78E-20E3-419E-B6B1-A82AB16F09DD.jpg",
+    "/img/gallery/P20251004_223839903_D1584E38-0A2E-4102-8288-CFB93EF5CDF1.jpg",
+    "/img/gallery/P20251004_223426370_3F025148-2266-4179-8BE1-F1D0F4861D3B.jpg",
+    "/img/gallery/P20251004_220101424_7378D271-1E9D-44FD-B7FF-00BFB417EBDF.jpg",
+    "/img/gallery/P20251004_214333347_BDBD00BE-4A48-47CC-9C4C-73E35481839A.jpg",
+    "/img/gallery/P20251004_213551031_C052F036-D89A-486C-96B1-59112243DBD1.jpg",
+    "/img/gallery/P20251004_212825041_E323C856-9989-4AB3-A0E4-2D48914A32DF.jpg",
+    "/img/gallery/P20250920_155443250_3461E30A-F577-41E3-BF57-6242E551E234.jpg",
+    "/img/gallery/P20250917_024412266_8D5DFFF7-739B-4472-93A3-08CBEB1578D7.jpg",
   ];
 
   const openContact = () => {
@@ -590,7 +693,7 @@ function WeddingInvitationContent() {
       />
 
       {/* Hero Section - 메인 이미지 */}
-      <div className="relative h-screen w-full">
+      <div className="relative h-screen w-full overflow-hidden">
         <Image
           src="/img/IMG_4981.jpg"
           alt="용준 & 이슬"
@@ -598,6 +701,23 @@ function WeddingInvitationContent() {
           className="object-cover"
           priority
         />
+
+        {/* 눈 내리는 효과 */}
+        <div className="absolute top-0 w-full h-full overflow-hidden">
+          <img
+            draggable={false}
+            className="absolute top-0 left-0 w-full select-none pointer-events-none call-out"
+            style={{
+              zIndex: 3,
+              WebkitMaskImage:
+                "linear-gradient(to bottom, rgba(0,0,0,1) 95%, rgba(0,0,0,0) 100%)",
+              maskImage:
+                "linear-gradient(to bottom, rgba(0,0,0,1) 95%, rgba(0,0,0,0) 100%)",
+            }}
+            src="https://cdn2.makedear.com/homepage/img/effect/new1/5.png"
+            alt=""
+          />
+        </div>
 
         {/* 웨이브 배경 - 사진 위에 덮어서 */}
         <div className="absolute bottom-[-1px] left-0 w-full z-10">
@@ -707,7 +827,7 @@ function WeddingInvitationContent() {
         <section className="px-6">
           <h2
             id="postParagraphEngTitle"
-            className="section-label whitespace-pre-wrap !pb-16 text-center font-serif text-sm tracking-widest"
+            className="section-label whitespace-pre-wrap !pb-10 text-center font-serif text-sm tracking-widest"
             style={{ color: "#d099a1" }}
           >
             <div>INVITE YOU</div>
@@ -737,20 +857,21 @@ function WeddingInvitationContent() {
 
             <div className="mb-6">
               <p className="text-gray-800 font-medium">
-                <span className="text-gray-800">박문식</span> ·{" "}
-                <span className="text-gray-800">노영임</span>의 아들{" "}
-                <span className="font-bold">용준</span>
+                <span className="text-gray-800 font-semibold">박문식</span> ·{" "}
+                <span className="text-gray-800 font-semibold">노영임</span>의
+                아들 <span className="font-semibold">용준</span>
               </p>
               <p className="text-gray-800 font-medium mt-2">
-                <span className="text-gray-800">김도수</span> ·{" "}
-                <span className="text-gray-800">박언자</span>의 딸{" "}
-                <span className="font-bold">이슬</span>
+                <span className="text-gray-800 font-semibold">김도수</span> ·{" "}
+                <span className="text-gray-800 font-semibold">박언자</span>의{" "}
+                <span className="mx-2"> 딸 </span>{" "}
+                <span className="font-semibold">이슬</span>
               </p>
             </div>
 
             <button
               onClick={openContact}
-              className="bg-white text-gray-800 w-full py-3 text-sm font-medium hover:bg-gray-50 transition-colors border border-gray-200 shadow-sm"
+              className="bg-white text-gray-800 w-full py-3 mt-5 text-sm font-medium hover:bg-gray-50 transition-colors border border-gray-200 shadow-sm"
             >
               연락처 보기
             </button>
@@ -1036,7 +1157,7 @@ function WeddingInvitationContent() {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                className="heart-icon w-6 h-6 heart-icon-update text-pink-400"
+                className="heart-icon w-6 h-6 heart-icon-update text-[#d08c95]"
               >
                 <path
                   fillRule="evenodd"
@@ -1085,7 +1206,7 @@ function WeddingInvitationContent() {
             data-aos="fade-up"
             className="text-base text-center font-semibold tracking-normal pb-8"
           >
-            <p>강남 상제리제 센터 2층 르비르모어</p>
+            <p>강남 샹제리제 센터 2층 르비르모어</p>
           </div>
 
           <div
@@ -1188,6 +1309,12 @@ function WeddingInvitationContent() {
           style={{ zIndex: 8 }}
         >
           <DdayCounter />
+          <div className="mt-10">
+            <hr
+              className="w-64 mx-auto border-t-2 border-dashed"
+              style={{ borderColor: "rgba(173, 134, 139, 0.5)" }}
+            />
+          </div>
         </section>
         {/* 캘린더 섹션 */}
         <section
@@ -1198,14 +1325,19 @@ function WeddingInvitationContent() {
           <h2
             id="calendarEngTitle"
             data-aos="fade-up"
-            className="section-label whitespace-pre-wrap pb-8 text-center pt-4 text-sm text-gray-400 tracking-wider"
+            className="section-label whitespace-pre-wrap text-center pt-4 text-sm text-gray-400 tracking-wider"
           >
             <div style={{ color: "#d099a1" }}>Gallery</div>
           </h2>
+          {/* 점선 구분선 */}
         </section>
         {/* 갤러리 섹션 */}
-        <section id="gallery" className="py-16 px-4 bg-white">
+        <section id="gallery" className="py-8 px-4 bg-white">
           <div className="max-w-6xl mx-auto">
+            {/* 안내 문구 */}
+            <p className="text-center text-xs text-gray-400 mb-8">
+              사진을 클릭하면 전체 화면 보기가 가능합니다
+            </p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
               {photos
                 .slice(0, isGalleryExpanded ? photos.length : 6)
@@ -1229,7 +1361,7 @@ function WeddingInvitationContent() {
 
             {/* 더보기/접기 버튼 */}
             {photos.length > 6 && (
-              <div className="flex justify-center mt-8">
+              <div className="flex justify-center mt-8 mb-4">
                 <button
                   onClick={handleToggleGallery}
                   disabled={isLoadingMore}
@@ -1294,7 +1426,7 @@ function WeddingInvitationContent() {
 
         {/* Location 섹션 */}
         <section
-          className="relative py-16 px-4"
+          className="relative py-10 px-4"
           style={{ backgroundColor: "rgb(249, 249, 249)" }}
         >
           {/* 웨이브 배경 (상단) */}
@@ -1376,7 +1508,7 @@ function WeddingInvitationContent() {
 
                   {/* 주소 복사 버튼 */}
                   <button
-                    className="copy-btn2 mt-4 mx-auto py-2 px-5 relative flex justify-center items-center h-9 bg-white rounded-lg border text-sm tracking-tighter transition-all duration-300 hover:shadow-lg"
+                    className="copy-btn2 mt-2 mx-auto py-2 px-5 relative flex justify-center items-center h-9 bg-white rounded-lg border text-sm tracking-tighter transition-all duration-300 hover:shadow-lg"
                     style={{ border: "1px solid rgba(173, 134, 139, 0.3)" }}
                     onClick={copyAddress}
                   >
@@ -1420,34 +1552,6 @@ function WeddingInvitationContent() {
 
                 {/* 지도 영역 */}
                 <div className="mb-2  w-full">
-                  <div className="flex">
-                    {/* 자물쇠 아이콘 */}
-                    <div
-                      className="mb-4 py-2 px-6 flex items-center justify-center min-w-16 h-9 rounded-lg border cursor-pointer"
-                      style={{ border: "1px solid rgba(173, 134, 139, 0.3)" }}
-                    >
-                      <svg
-                        fill="currentColor"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 448 512"
-                        className="h-4 text-black"
-                      >
-                        <path d="M144 144c0-44.2 35.8-80 80-80c31.9 0 59.4 18.6 72.3 45.7c7.6 16 26.7 22.8 42.6 15.2s22.8-26.7 15.2-42.6C331 33.7 281.5 0 224 0C144.5 0 80 64.5 80 144v48H64c-35.3 0-64 28.7-64 64V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V256c0-35.3-28.7-64-64-64H144V144z"></path>
-                      </svg>
-                    </div>
-
-                    {/* 약도보기 버튼 */}
-                    <button
-                      className="mb-4 ml-auto py-2 px-5 flex items-center h-9 border rounded-lg text-sm tracking-tighter transition-all duration-300 hover:shadow-lg"
-                      style={{
-                        border: "1px solid rgba(173, 134, 139, 0.3)",
-                        color: "rgba(173, 134, 139, 1)",
-                      }}
-                    >
-                      약도보기
-                    </button>
-                  </div>
-
                   {/* 네이버 지도 */}
                   <div className="relative h-48 md:h-64 bg-gray-100 rounded-xl overflow-hidden mb-6">
                     <div id="naverMap" className="w-full h-full" />
@@ -1513,7 +1617,7 @@ function WeddingInvitationContent() {
                 </div>
 
                 {/* 내비게이션 버튼 - 통합형 */}
-                <div className="px-2 flex justify-center w-full">
+                <div className="px-2 flex justify-center w-full mb-4">
                   <div className="flex w-full max-w-[380px]">
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 w-full h-[50px] flex items-center justify-between overflow-hidden">
                       {/* 네이버지도 */}
@@ -1654,36 +1758,331 @@ function WeddingInvitationContent() {
           </div>
         </section>
 
+        {/* 오시는 길 상세 섹션 */}
+        <section className="py-10 px-4 bg-white">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="section-label whitespace-pre-wrap pb-8 text-center text-sm text-gray-400 tracking-wider">
+              <div style={{ color: "#d099a1" }}>WAY TO COME</div>
+            </h2>
+
+            <div className="section-wtc-area-1 px-4 flex flex-col w-full">
+              {/* 대중교통 */}
+              <div
+                data-aos="fade-up"
+                className="py-6 first-of-type:pt-0 last-of-type:pb-0"
+              >
+                <h2 className="section-wtc-area-2 !font-semibold tracking-tight whitespace-pre-wrap pb-4">
+                  <div
+                    data-aos="fade-up"
+                    className="flex items-center justify-start"
+                  >
+                    <div
+                      className="waytocomeicon mr-2 p-2 bg-gray-100 rounded-full"
+                      style={{
+                        width: "35px",
+                        height: "35px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 18 18"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <mask
+                          id="mask0_309_5387"
+                          maskUnits="userSpaceOnUse"
+                          x="0"
+                          y="0"
+                          width="18"
+                          height="18"
+                          style={{ maskType: "alpha" }}
+                        >
+                          <rect width="18" height="18" fill="#EED8D8"></rect>
+                        </mask>
+                        <g mask="url(#mask0_309_5387)">
+                          <path
+                            d="M6 14C6.55228 14 7 13.5523 7 13C7 12.4477 6.55228 12 6 12C5.44772 12 5 12.4477 5 13C5 13.5523 5.44772 14 6 14Z"
+                            fill="currentColor"
+                          ></path>
+                          <path
+                            d="M12 14C12.5523 14 13 13.5523 13 13C13 12.4477 12.5523 12 12 12C11.4477 12 11 12.4477 11 13C11 13.5523 11.4477 14 12 14Z"
+                            fill="currentColor"
+                          ></path>
+                          <path
+                            d="M3.5 8C3.5 6.067 5.067 4.5 7 4.5H11C12.933 4.5 14.5 6.067 14.5 8V14C14.5 14.8284 13.8284 15.5 13 15.5H5C4.17157 15.5 3.5 14.8284 3.5 14V8Z"
+                            stroke="currentColor"
+                          ></path>
+                          <line
+                            x1="3"
+                            y1="10.5"
+                            x2="14"
+                            y2="10.5"
+                            stroke="currentColor"
+                          ></line>
+                          <line
+                            x1="7"
+                            y1="2.5"
+                            x2="11"
+                            y2="2.5"
+                            stroke="currentColor"
+                          ></line>
+                          <path
+                            d="M0.5 17.5V8.5C0.5 4.08172 4.08172 0.5 8.5 0.5H9.5C13.9183 0.5 17.5 4.08172 17.5 8.5V17.5"
+                            stroke="currentColor"
+                            strokeLinecap="square"
+                          ></path>
+                          <line
+                            y1="-0.5"
+                            x2="5.83095"
+                            y2="-0.5"
+                            transform="matrix(-0.514496 0.857493 -0.729537 -0.683941 6 15)"
+                            stroke="currentColor"
+                          ></line>
+                          <line
+                            y1="-0.5"
+                            x2="5.83095"
+                            y2="-0.5"
+                            transform="matrix(0.514496 0.857493 0.729537 -0.683941 12 15)"
+                            stroke="currentColor"
+                          ></line>
+                        </g>
+                      </svg>
+                    </div>
+                    <div
+                      className="font-semibold break-all"
+                      style={{ fontSize: "18px" }}
+                    >
+                      대중교통
+                    </div>
+                  </div>
+                </h2>
+                <div
+                  data-aos="fade-up"
+                  className="section-wtc-area-3 pt-4 border-t border-dashed tracking-tighter break-all whitespace-pre-wrap text-left"
+                  style={{ borderColor: "rgba(173, 134, 139, 0.3)" }}
+                >
+                  <p className="mb-2">
+                    <span style={{ color: "#00a84d" }}>●</span>{" "}
+                    <strong>지하철 2호선</strong>,{" "}
+                    <span style={{ color: "#FFC224" }}>●</span>{" "}
+                    <strong>수인분당선 선릉역</strong>
+                  </p>
+                  <p className="ml-4 text-gray-700">
+                    1번출구 이용시 연결 통로 이동
+                  </p>
+                </div>
+              </div>
+
+              {/* 자동차 */}
+              <div
+                data-aos="fade-up"
+                className="py-6 first-of-type:pt-0 last-of-type:pb-0"
+              >
+                <h2 className="section-wtc-area-2 !font-semibold tracking-tight whitespace-pre-wrap pb-4">
+                  <div
+                    data-aos="fade-up"
+                    className="flex items-center justify-start"
+                  >
+                    <div
+                      className="waytocomeicon mr-2 p-2 bg-gray-100 rounded-full"
+                      style={{
+                        width: "35px",
+                        height: "35px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 18 18"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <mask
+                          id="mask0_309_5402"
+                          maskUnits="userSpaceOnUse"
+                          x="0"
+                          y="0"
+                          width="18"
+                          height="18"
+                          style={{ maskType: "alpha" }}
+                        >
+                          <rect
+                            width="18"
+                            height="18"
+                            fill="currentColor"
+                          ></rect>
+                        </mask>
+                        <g mask="url(#mask0_309_5402)">
+                          <path
+                            d="M4 11C4.55228 11 5 10.5523 5 10C5 9.44772 4.55228 9 4 9C3.44772 9 3 9.44772 3 10C3 10.5523 3.44772 11 4 11Z"
+                            fill="currentColor"
+                          ></path>
+                          <path
+                            d="M14 11C14.5523 11 15 10.5523 15 10C15 9.44772 14.5523 9 14 9C13.4477 9 13 9.44772 13 10C13 10.5523 13.4477 11 14 11Z"
+                            fill="currentColor"
+                          ></path>
+                          <path
+                            d="M16 7.5H2"
+                            stroke="currentColor"
+                            strokeMiterlimit="10"
+                          ></path>
+                          <path
+                            d="M18 7H15L16 9H18V7Z"
+                            fill="currentColor"
+                          ></path>
+                          <path d="M3 7H0V9H2L3 7Z" fill="currentColor"></path>
+                          <path
+                            d="M1.5 15V10L3 7.5L3.72147 3.1712C3.8822 2.20683 4.71658 1.5 5.69425 1.5H12.3057C13.2834 1.5 14.1178 2.20683 14.2785 3.1712L15 7.5L16.5 10V15H1.5Z"
+                            stroke="currentColor"
+                          ></path>
+                          <path
+                            d="M13 15H16V17.5C16 17.7761 15.7761 18 15.5 18H13.5C13.2239 18 13 17.7761 13 17.5V15Z"
+                            fill="currentColor"
+                          ></path>
+                          <path
+                            d="M2 15H5V17.5C5 17.7761 4.77614 18 4.5 18H2.5C2.22386 18 2 17.7761 2 17.5V15Z"
+                            fill="currentColor"
+                          ></path>
+                          <line
+                            x1="3"
+                            y1="12.5"
+                            x2="15"
+                            y2="12.5"
+                            stroke="currentColor"
+                          ></line>
+                        </g>
+                      </svg>
+                    </div>
+                    <div
+                      className="font-semibold break-all"
+                      style={{ fontSize: "18px" }}
+                    >
+                      자동차
+                    </div>
+                  </div>
+                </h2>
+                <div
+                  data-aos="fade-up"
+                  className="section-wtc-area-3 pt-4 border-t border-dashed tracking-tighter break-all whitespace-pre-wrap text-left"
+                  style={{ borderColor: "rgba(173, 134, 139, 0.3)" }}
+                >
+                  <p className="text-gray-700">
+                    <strong>· 네비게이션</strong>
+                  </p>
+                  <p className="ml-4 text-gray-700">
+                    &quot;샹제리제 센터&quot; 또는 &quot;르비르모어&quot; 검색
+                  </p>
+                </div>
+              </div>
+
+              {/* 주차 */}
+              <div
+                data-aos="fade-up"
+                className="py-6 first-of-type:pt-0 last-of-type:pb-0"
+              >
+                <h2 className="section-wtc-area-2 !font-semibold tracking-tight whitespace-pre-wrap pb-4">
+                  <div
+                    data-aos="fade-up"
+                    className="flex items-center justify-start"
+                  >
+                    <div
+                      className="waytocomeicon mr-2 p-2 bg-gray-100 rounded-full"
+                      style={{
+                        width: "35px",
+                        height: "35px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="currentColor"
+                        stroke="currentColor"
+                        xmlns="http://www.w3.org/2000/svg"
+                        version="1.0"
+                        viewBox="0 0 281 320"
+                      >
+                        <path d="M63.3 21.4c-11.2 2.8-18.7 10.5-21.8 22.3-2.1 8.1-2.3 244.5-.2 249.6 1.9 4.3 4 5.9 8.1 6 4.7.1 8.3-2 9.6-5.6.6-1.9 1-19.3 1-48.3V200h44.8c24.6 0 48.8-.5 53.7-1 39.1-4.4 68.4-29.3 78.1-66.5 5-19 3-42.5-5-60-9.2-20.2-26-36.3-46.6-44.8-16.3-6.7-18.3-6.9-70-7.3-35.7-.2-47.7 0-51.7 1zm107.5 21.3c7.4 2.5 17.8 8.1 23.4 12.6 5.9 4.7 14.2 15.1 18.3 22.8 9.8 18.8 10.1 43.8.5 63-8.1 16.5-22.8 29.3-40.5 35.6l-8 2.8-52.2.3-52.3.3V114c0-70.4 0-70.1 4.7-73 1.2-.7 17.7-.9 50.8-.7 46.6.3 49.3.4 55.3 2.4z"></path>
+                      </svg>
+                    </div>
+                    <div
+                      className="font-semibold break-all"
+                      style={{ fontSize: "18px" }}
+                    >
+                      주차
+                    </div>
+                  </div>
+                </h2>
+                <div
+                  data-aos="fade-up"
+                  className="section-wtc-area-3 pt-4 border-t border-dashed tracking-tighter break-all whitespace-pre-wrap text-left"
+                  style={{ borderColor: "rgba(173, 134, 139, 0.3)" }}
+                >
+                  <p className="mb-2">
+                    <strong>·</strong> 자가용 이용 시{" "}
+                    <mark
+                      style={{
+                        backgroundColor: "#fff8b2",
+                        padding: "2px 4px",
+                      }}
+                    >
+                      무료주차 2시간
+                    </mark>
+                  </p>
+                  <p className="text-gray-700">
+                    <strong>·</strong> 로비 월컴드링크 데스크에서 주차 등록 후
+                    출차
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* 안내사항 섹션 */}
         <section
           id="information"
-          className="py-16 px-4 bg-white"
+          className="py-8 px-4 bg-white"
           ref={(el) => {
             sectionRefs.current[6] = el;
           }}
         >
           <div className="max-w-md mx-auto">
             {/* 영문 제목 */}
-            <h2
-              className={`text-center text-sm tracking-widest text-gray-400 mb-4 transition-all duration-700 ${
-                visibleSections[6]
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-8"
-              }`}
-            >
-              INFORMATION
+            {/* 영문 제목 */}
+            <h2 className="section-label whitespace-pre-wrap pb-8 text-center text-sm text-gray-400 tracking-wider">
+              <div style={{ color: "#d099a1" }}>INFORMATION</div>
             </h2>
-
             {/* 한국어 제목 */}
-            <h1
-              className={`text-center text-2xl font-bold text-gray-800 mb-16 transition-all duration-700 delay-100 ${
+            <h2
+              className={`text-center text-lg font-bold text-gray-800 mb-8 transition-all duration-700 delay-100 ${
                 visibleSections[6]
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-8"
               }`}
             >
               안내사항
-            </h1>
+            </h2>
+
+            {/* 포토부스 이미지 */}
+            <div className="mb-12 px-4">
+              <img
+                src="/img/info/photobox.jpg"
+                alt="포토부스&포토방명록"
+                className="w-full rounded-xl object-cover shadow-lg"
+                draggable={false}
+              />
+            </div>
 
             {/* 탭 메뉴 */}
             <div
@@ -1695,7 +2094,7 @@ function WeddingInvitationContent() {
             >
               <button
                 onClick={() => setActiveInfoTab(0)}
-                className={`flex-1 py-4 text-center font-semibold border-t border-l border-r rounded-t-xl transition-all ${
+                className={`flex-1 h-10 flex items-center justify-center text-sm font-semibold border-t border-l border-r rounded-t-xl transition-all ${
                   activeInfoTab === 0
                     ? "bg-white border-gray-300 text-gray-800 border-b-0 -mb-px"
                     : "bg-gray-50 border-gray-200 text-gray-500 border-b"
@@ -1705,17 +2104,17 @@ function WeddingInvitationContent() {
               </button>
               <button
                 onClick={() => setActiveInfoTab(1)}
-                className={`flex-1 py-4 text-center font-semibold border-t border-l border-r transition-all ${
+                className={`flex-1 h-10 flex items-center justify-center text-sm font-semibold border-t border-l border-r rounded-t-xl transition-all ${
                   activeInfoTab === 1
                     ? "bg-white border-gray-300 text-gray-800 border-b-0 -mb-px"
                     : "bg-gray-50 border-gray-200 text-gray-500 border-b"
                 }`}
               >
-                장소
+                주차
               </button>
               <button
                 onClick={() => setActiveInfoTab(2)}
-                className={`flex-1 py-4 text-center font-semibold border-t border-l border-r rounded-t-xl transition-all ${
+                className={`flex-1 h-10 flex items-center justify-center text-sm font-semibold border-t border-l border-r rounded-t-xl transition-all ${
                   activeInfoTab === 2
                     ? "bg-white border-gray-300 text-gray-800 border-b-0 -mb-px"
                     : "bg-gray-50 border-gray-200 text-gray-500 border-b"
@@ -1739,23 +2138,29 @@ function WeddingInvitationContent() {
                 >
                   <div className="mb-6 px-4">
                     <img
-                      src="https://cdn2.makedear.com/homepage/img/detail/147.jpg"
-                      alt="미슐랭 요리"
+                      src="/img/info/food.PNG"
+                      alt="식사 안내"
                       className="w-full rounded-xl object-cover aspect-[2/1]"
                       draggable={false}
                     />
                   </div>
                   <div className="text-center text-gray-700 leading-relaxed space-y-2 mb-8">
-                    <p>미슐랭 3스타 셰프의</p>
-                    <p>프렌치 코스 요리를 준비하였습니다.</p>
-                    <p className="mt-4">그릴에 구운 안심 스테이크와</p>
-                    <p>담백함을 느끼실 수 있는 잔치국수까지</p>
-                    <p>차례로 식사를 즐겨주시기 바랍니다.</p>
+                    <p>한식, 양식, 중식, 일식 등 </p>
+                    <p>여러 종류의 요리가 마련되며,</p>
+                    <p className="mt-4">고기류, 채식 메뉴까지</p>
+                    <p>다채로운 구성의 뷔페가 마련되어 있습니다.</p>
+                    <p>따뜻한 마음으로 준비한 식사를</p>
+                    <p>편안히 즐겨주시기 바랍니다.</p>
                   </div>
                   <div className="flex justify-center">
-                    <button className="bg-white border border-gray-300 text-gray-700 px-8 py-4 rounded-xl hover:bg-gray-50 transition-colors font-medium">
-                      메뉴 보기
-                    </button>
+                    <a
+                      href="https://www.xn--2w2ba83gt2hc4l.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-white border border-gray-300 text-gray-700 px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors font-medium inline-block"
+                    >
+                      르비르모어 구경하기
+                    </a>
                   </div>
                 </div>
               )}
@@ -1772,23 +2177,26 @@ function WeddingInvitationContent() {
                 >
                   <div className="mb-6 px-4">
                     <img
-                      src="https://cdn2.makedear.com/homepage/img/detail/151.jpg"
+                      src="https://cdn2.makedear.com/homepage/img/detail/161.jpg"
                       alt="웨딩홀"
                       className="w-full rounded-xl object-cover aspect-[2/1]"
                       draggable={false}
                     />
                   </div>
                   <div className="text-center text-gray-700 leading-relaxed space-y-2 mb-8">
-                    <p>강남 상제리제 센터 2층 르비르모어에서</p>
-                    <p>저희 두 사람의 웨딩이 진행됩니다.</p>
-                    <p className="mt-4">지정 좌석제로 진행되어 홀 입구에</p>
-                    <p>좌석 배치도가 준비되어 있을 예정이오니</p>
-                    <p>확인 후 착석 부탁드립니다.</p>
+                    <p>웨딩홀 지하 3층 ~ 6층</p>
+                    <p>450대 주차가 가능하고</p>
+                    <p className="mt-4">2시간 무료주차가 가능합니다.</p>
                   </div>
                   <div className="flex justify-center">
-                    <button className="bg-white border border-gray-300 text-gray-700 px-8 py-4 rounded-xl hover:bg-gray-50 transition-colors font-medium">
-                      좌석 확인
-                    </button>
+                    <a
+                      href="https://www.xn--2w2ba83gt2hc4l.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-white border border-gray-300 text-gray-700 px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors font-medium inline-block"
+                    >
+                      르비르모어 구경하기
+                    </a>
                   </div>
                 </div>
               )}
@@ -1805,34 +2213,170 @@ function WeddingInvitationContent() {
                 >
                   <div className="mb-6 px-4">
                     <img
-                      src="https://cdn2.makedear.com/homepage/img/detail/131.jpg"
+                      src="/img/info/mainplace.PNG"
                       alt="예식장"
                       className="w-full rounded-xl object-cover aspect-[2/1]"
                       draggable={false}
                     />
                   </div>
                   <div className="text-center text-gray-700 leading-relaxed space-y-2 mb-8">
-                    <p>1부 예식이 종료된 후</p>
-                    <p>코스 요리가 좌석에 개별 제공되는</p>
-                    <p>
-                      <strong>동시 예식</strong>으로 진행됩니다.
-                    </p>
-                    <p className="mt-4">
-                      하객석은 모두{" "}
-                      <span className="bg-yellow-200 px-1 rounded font-semibold">
-                        지정 좌석
-                      </span>
-                      으로 운영되니
-                    </p>
-                    <p>착오 없으시길 바라겠습니다.</p>
+                    <p>클리타홀에서 저희 두 사람의</p>
+                    <p>웨딩이 진행 됩니다.</p>
+                    <p>2층 로비에서 웰컴드링크 및 대형스크린이</p>
+                    <p>준비되어 있습니다.</p>
+                    <p className="mt-4">따뜻한 축복의 마음으로 함께 해주시면</p>
+                    <p>감사하겠습니다.</p>
                   </div>
                   <div className="flex justify-center">
-                    <button className="bg-white border border-gray-300 text-gray-700 px-8 py-4 rounded-xl hover:bg-gray-50 transition-colors font-medium">
-                      식순 보기
-                    </button>
+                    <a
+                      href="https://www.xn--2w2ba83gt2hc4l.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-white border border-gray-300 text-gray-700 px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors font-medium inline-block"
+                    >
+                      르비르모어 구경하기
+                    </a>
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </section>
+
+        {/* 인스타그램 피드 스타일 섹션 */}
+        <section className="py-8 px-4 bg-white">
+          <div className="max-w-md mx-auto">
+            <div className="px-4">
+              {/* 인스타그램 카드 */}
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                {/* 헤더 - 프로필 */}
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2px]">
+                      <div className="w-full h-full rounded-full overflow-hidden bg-white p-[2px]">
+                        <Image
+                          src="/img/IMG_4981-2.jpg"
+                          alt="Profile"
+                          width={36}
+                          height={36}
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      </div>
+                    </div>
+                    <span className="text-sm font-semibold">
+                      Groom &amp; Bride
+                    </span>
+                  </div>
+                  <button className="text-gray-700">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="12" cy="12" r="1" fill="currentColor" />
+                      <circle cx="12" cy="5" r="1" fill="currentColor" />
+                      <circle cx="12" cy="19" r="1" fill="currentColor" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* 메인 이미지 */}
+                <div className="w-full aspect-square bg-gray-100">
+                  <Image
+                    src="/img/IMG_4981-2.jpg"
+                    alt="Wedding Photo"
+                    width={500}
+                    height={500}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* 액션 버튼 */}
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-4">
+                      {/* 좋아요 */}
+                      <button className="hover:text-gray-500 transition-colors">
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                      </button>
+                      {/* 댓글 */}
+                      <button className="hover:text-gray-500 transition-colors">
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                      </button>
+                      {/* 공유 */}
+                      <button className="hover:text-gray-500 transition-colors">
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="22" y1="2" x2="11" y2="13"></line>
+                          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                      </button>
+                    </div>
+                    {/* 북마크 */}
+                    <button className="hover:text-gray-500 transition-colors">
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* 좋아요 수 */}
+                  <div className="mb-2">
+                    <span className="text-sm font-semibold">❤ 532 Likes</span>
+                  </div>
+
+                  {/* 캡션 */}
+                  <div className="text-sm">
+                    <span className="font-semibold">Happy Wedding Day</span>
+                    <br />
+                    <span className="text-gray-700">
+                      we are getting married
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -2164,11 +2708,28 @@ function WeddingInvitationContent() {
           <div className="max-w-4xl mx-auto px-8">
             {/* 제목 섹션 */}
             <div className="text-center mb-6">
-              <div className="text-center text-sm text-gray-400 tracking-wider mb-4">
-                GUEST BOOK
+              <h2
+                id="calendarEngTitle"
+                data-aos="fade-up"
+                className="section-label whitespace-pre-wrap pb-8 text-center text-sm text-gray-400 tracking-wider"
+              >
+                <div style={{ color: "#d099a1" }}>CALENDAR</div>
+              </h2>
+              <h2
+                className={`text-center text-lg font-bold text-gray-800 mb-8 transition-all duration-700 delay-100 ${
+                  visibleSections[6]
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-8"
+                }`}
+              >
+                방명록
+              </h2>
+              <div className="mb-12">
+                <hr
+                  className="w-64 mx-auto border-t-2 border-dashed"
+                  style={{ borderColor: "rgba(173, 134, 139, 0.5)" }}
+                />
               </div>
-              <h1 className="text-3xl font-light text-gray-800 mb-8">방명록</h1>
-              <div className="w-12 h-px bg-gray-300 mx-auto mb-8"></div>
               <div className="text-center text-sm text-gray-600 leading-relaxed">
                 <p>따뜻한 마음이 담긴 축하의 글을 남겨주시면</p>
                 <p>소중한 추억으로 간직하겠습니다.</p>
@@ -2304,6 +2865,95 @@ function WeddingInvitationContent() {
         </section>
       </div>
 
+      {/* Thank You 섹션 */}
+      <section className="w-full pt-16 pb-28 bg-black">
+        <div className="max-w-4xl mx-auto px-6">
+          {/* 타이틀 */}
+          <div className="text-center mb-8">
+            <h2 className="text-4xl md:text-5xl font-serif text-zinc-200 mb-6">
+              Thank You
+            </h2>
+            <p className="text-base md:text-lg text-zinc-300 leading-relaxed">
+              축하해주시는 모든 분들께 진심으로 감사드립니다.
+              <br />
+              신랑, 신부에게 언제든 축하 인사 건네주시면 기쁘게
+              답장드리겠습니다.
+            </p>
+          </div>
+
+          {/* 슬라이드쇼 */}
+          <div className="relative w-full mt-12">
+            <div
+              className="w-full overflow-hidden"
+              style={{
+                transform: "rotate(-3deg)",
+                maskImage:
+                  "linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgb(0, 0, 0) 25%, rgb(0, 0, 0) 75%, rgba(0, 0, 0, 0) 100%)",
+                WebkitMaskImage:
+                  "linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgb(0, 0, 0) 25%, rgb(0, 0, 0) 75%, rgba(0, 0, 0, 0) 100%)",
+              }}
+            >
+              <div
+                ref={slideRef}
+                className="flex gap-3 items-center"
+                style={{
+                  transform: `translateX(${slidePosition}px)`,
+                  willChange: "transform",
+                }}
+              >
+                {/* 이미지들을 세 번 반복해서 무한 슬라이드 효과 */}
+                {[...Array(3)].map((_, setIndex) => (
+                  <React.Fragment key={setIndex}>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <img
+                        src="/img/IMG_4981-1.jpg"
+                        alt="Wedding Photo"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <img
+                        src="/img/IMG_4981-2.jpg"
+                        alt="Wedding Photo"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <img
+                        src="/img/IMG_4981-3.jpg"
+                        alt="Wedding Photo"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <img
+                        src="/img/IMG_4981.JPG"
+                        alt="Wedding Photo"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <img
+                        src="/img/kim.jpg"
+                        alt="Wedding Photo"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <img
+                        src="/img/park.jpg"
+                        alt="Wedding Photo"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 하단 컨트롤 바 */}
       <div
         className="fixed bottom-0 left-1/2 -translate-x-1/2 z-[9999] flex justify-center items-center w-[44rem] bg-white border-t border-t-[#eee] drop-shadow-2xl"
@@ -2423,7 +3073,7 @@ function WeddingInvitationContent() {
       />
 
       {/* BGM 오디오 엘리먼트 */}
-      <audio ref={audioRef} loop>
+      <audio ref={audioRef} loop autoPlay muted preload="auto">
         <source src="/bgm.mp3" type="audio/mpeg" />
       </audio>
     </div>
