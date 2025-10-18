@@ -477,28 +477,6 @@ function WeddingInvitationContent() {
     "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/6.jpg",
     "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/7.jpg",
     "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/8.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/9.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/10.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/11.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/12.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/13.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/14.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/15.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/16.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/17.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/18.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/19.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/20.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/21.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/22.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/23.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/24.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/25.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/26.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/27.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/28.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/29.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/30.jpg",
   ];
 
   const openContact = () => {
@@ -693,9 +671,9 @@ function WeddingInvitationContent() {
       />
 
       {/* Hero Section - 메인 이미지 */}
-      <div className="relative h-screen w-full overflow-hidden">
+      <div className="relative h-screen max-w-[430px] mx-auto overflow-hidden">
         <Image
-          src="/img/IMG_4981.jpg"
+          src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981.jpg"
           alt="용준 & 이슬"
           fill
           className="object-cover"
@@ -810,7 +788,7 @@ function WeddingInvitationContent() {
             <div className="bg-white p-4 shadow-lg">
               <div className="bg-gray-100">
                 <Image
-                  src="/img/IMG_4981-2.jpg"
+                  src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-2.jpg"
                   alt="Wedding Photo"
                   width={400}
                   height={500}
@@ -1144,7 +1122,7 @@ function WeddingInvitationContent() {
               className="flex-1 overflow-hidden aspect-[1/1.35] rounded-2xl relative"
             >
               <Image
-                src="/img/park.JPG"
+                src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/park.jpg"
                 alt="신랑 사진"
                 fill
                 className="object-cover select-none pointer-events-none call-out"
@@ -1169,7 +1147,7 @@ function WeddingInvitationContent() {
 
             <div className="flex-1 overflow-hidden aspect-[1/1.35] rounded-2xl relative">
               <Image
-                src="/img/kim.JPG"
+                src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/kim.jpg"
                 alt="신부 사진"
                 fill
                 className="object-cover select-none pointer-events-none call-out"
@@ -2255,7 +2233,7 @@ function WeddingInvitationContent() {
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2px]">
                       <div className="w-full h-full rounded-full overflow-hidden bg-white p-[2px]">
                         <Image
-                          src="/img/IMG_4981-2.jpg"
+                          src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-2.jpg"
                           alt="Profile"
                           width={36}
                           height={36}
@@ -2286,7 +2264,7 @@ function WeddingInvitationContent() {
                 {/* 메인 이미지 */}
                 <div className="w-full aspect-square bg-gray-100">
                   <Image
-                    src="/img/IMG_4981-2.jpg"
+                    src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-2.jpg"
                     alt="Wedding Photo"
                     width={500}
                     height={500}
@@ -2906,42 +2884,42 @@ function WeddingInvitationContent() {
                   <React.Fragment key={setIndex}>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <img
-                        src="/img/IMG_4981-1.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-1.jpg"
                         alt="Wedding Photo"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <img
-                        src="/img/IMG_4981-2.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-2.jpg"
                         alt="Wedding Photo"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <img
-                        src="/img/IMG_4981-3.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-3.jpg"
                         alt="Wedding Photo"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <img
-                        src="/img/IMG_4981.JPG"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981.JPG"
                         alt="Wedding Photo"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <img
-                        src="/img/kim.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/kim.jpg"
                         alt="Wedding Photo"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <img
-                        src="/img/park.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/park.jpg"
                         alt="Wedding Photo"
                         className="w-full h-full object-cover"
                       />
