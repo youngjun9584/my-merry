@@ -358,3 +358,13 @@ body {
 .colonmb {
   color: #9ca3af;
 }
+
+/* 눈 내리는 애니메이션 */
+@keyframes snowfall {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 500px;
+  }
+}

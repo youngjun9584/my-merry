@@ -35,6 +35,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import Script from "next/script";
 import GuestbookModal from "@/components/GuestbookModal";
+import JsonLd from "./JsonLd";
 
 function DdayCounter() {
   const [timeLeft, setTimeLeft] = useState({
@@ -137,11 +138,13 @@ function WeddingInvitationContent() {
   const router = useRouter();
   const isContactOpen = searchParams.get("contact") === "open";
   const isGalleryOpen = searchParams.get("gallery") === "open";
-  const currentPhotoId = searchParams.get("photo");
 
   // 갤러리 표시 상태 관리
   const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // 갤러리 모달 현재 사진 인덱스 (URL이 아닌 state로 관리)
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   // 지도 로딩 상태 관리
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -377,14 +380,14 @@ function WeddingInvitationContent() {
   useEffect(() => {
     const slideInterval = setInterval(() => {
       setSlidePosition((prev) => {
-        // 이미지 6개 * (너비 w-48=192px + gap-3=12px) = 204px per image
-        const totalWidth = 6 * 204;
+        // 이미지 10개 * (너비 w-48=192px + gap-3=12px) = 204px per image
+        const totalWidth = 10 * 204;
         // 한 세트의 너비만큼 이동했으면 리셋
         if (Math.abs(prev) >= totalWidth) {
           return 0;
         }
-        // 0.5px씩 왼쪽으로 이동 (더 부드럽게)
-        return prev - 0.5;
+        // 1px씩 왼쪽으로 이동 (더 빠르게)
+        return prev - 1;
       });
     }, 20); // 20ms마다 업데이트
 
@@ -467,17 +470,14 @@ function WeddingInvitationContent() {
     }
   };
 
-  // 갤러리 사진 데이터 (S3 이미지 사용)
-  const photos = [
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/1.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/2.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/3.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/4.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/5.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/6.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/7.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/8.jpg",
-  ];
+  // 갤러리 사진 데이터 (S3 이미지 사용) - 30개
+  const photos = Array.from(
+    { length: 30 },
+    (_, i) =>
+      `https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/${
+        i + 1
+      }.jpg`
+  );
 
   const openContact = () => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
@@ -492,32 +492,30 @@ function WeddingInvitationContent() {
   };
 
   const openGallery = (photoIndex: number) => {
+    setCurrentPhotoIndex(photoIndex); // state에 인덱스 저장
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set("gallery", "open");
-    newSearchParams.set("photo", photoIndex.toString());
     router.push(`?${newSearchParams.toString()}`, { scroll: false });
   };
 
   const closeGallery = () => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.delete("gallery");
-    newSearchParams.delete("photo");
     router.push(`?${newSearchParams.toString()}`, { scroll: false });
   };
 
   const navigatePhoto = (direction: "prev" | "next") => {
-    const currentIndex = currentPhotoId ? parseInt(currentPhotoId) : 0;
     let newIndex;
 
     if (direction === "prev") {
-      newIndex = currentIndex > 0 ? currentIndex - 1 : photos.length - 1;
+      newIndex =
+        currentPhotoIndex > 0 ? currentPhotoIndex - 1 : photos.length - 1;
     } else {
-      newIndex = currentIndex < photos.length - 1 ? currentIndex + 1 : 0;
+      newIndex =
+        currentPhotoIndex < photos.length - 1 ? currentPhotoIndex + 1 : 0;
     }
 
-    const newSearchParams = new URLSearchParams(searchParams.toString());
-    newSearchParams.set("photo", newIndex.toString());
-    router.push(`?${newSearchParams.toString()}`, { scroll: false });
+    setCurrentPhotoIndex(newIndex); // state만 업데이트, URL 변경 없음
   };
 
   // 더보기/접기 토글 함수
@@ -662,6 +660,9 @@ function WeddingInvitationContent() {
       className="min-h-screen"
       style={{ backgroundColor: "rgb(249, 249, 249)" }}
     >
+      {/* 구조화 데이터 (SEO) */}
+      <JsonLd />
+
       {/* 네이버 지도 API 스크립트 */}
       <Script
         strategy="afterInteractive"
@@ -678,22 +679,29 @@ function WeddingInvitationContent() {
           fill
           className="object-cover"
           priority
+          quality={85}
+          sizes="(max-width: 430px) 100vw, 430px"
+          placeholder="blur"
+          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCxABmX/9k="
         />
 
         {/* 눈 내리는 효과 */}
-        <div className="absolute top-0 w-full h-full overflow-hidden">
-          <img
-            draggable={false}
-            className="absolute top-0 left-0 w-full select-none pointer-events-none call-out"
+        <div className="absolute top-0 w-full h-full overflow-hidden pointer-events-none">
+          <div
+            className="absolute w-full h-full"
             style={{
               zIndex: 3,
+              backgroundImage:
+                "url('https://cdn2.makedear.com/homepage/img/effect/new1/5.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "auto",
+              opacity: 0.7,
+              animation: "snowfall 20s linear infinite",
               WebkitMaskImage:
-                "linear-gradient(to bottom, rgba(0,0,0,1) 95%, rgba(0,0,0,0) 100%)",
+                "linear-gradient(to bottom, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%)",
               maskImage:
-                "linear-gradient(to bottom, rgba(0,0,0,1) 95%, rgba(0,0,0,0) 100%)",
+                "linear-gradient(to bottom, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%)",
             }}
-            src="https://cdn2.makedear.com/homepage/img/effect/new1/5.png"
-            alt=""
           />
         </div>
 
@@ -793,6 +801,9 @@ function WeddingInvitationContent() {
                   width={400}
                   height={500}
                   className="w-full h-auto object-cover"
+                  loading="lazy"
+                  quality={80}
+                  sizes="(max-width: 768px) 100vw, 400px"
                 />
               </div>
               {/* 폴라로이드 하단 여백 */}
@@ -1022,10 +1033,7 @@ function WeddingInvitationContent() {
           (() => {
             const currentIndex = Math.max(
               0,
-              Math.min(
-                currentPhotoId ? parseInt(currentPhotoId) : 0,
-                photos.length - 1
-              )
+              Math.min(currentPhotoIndex, photos.length - 1)
             );
             const currentPhoto = photos[currentIndex];
 
@@ -1068,8 +1076,9 @@ function WeddingInvitationContent() {
                       alt={`Gallery ${currentIndex + 1}`}
                       fill
                       className="object-contain"
-                      quality={90}
-                      priority
+                      quality={85}
+                      loading="eager"
+                      sizes="100vw"
                       onError={() => {
                         console.error("Image failed to load:", currentPhoto);
                       }}
@@ -1127,6 +1136,9 @@ function WeddingInvitationContent() {
                 fill
                 className="object-cover select-none pointer-events-none call-out"
                 draggable={false}
+                loading="lazy"
+                quality={75}
+                sizes="(max-width: 768px) 45vw, 300px"
               />
             </div>
 
@@ -1152,6 +1164,9 @@ function WeddingInvitationContent() {
                 fill
                 className="object-cover select-none pointer-events-none call-out"
                 draggable={false}
+                loading="lazy"
+                quality={75}
+                sizes="(max-width: 768px) 45vw, 300px"
               />
             </div>
           </div>
@@ -1332,6 +1347,8 @@ function WeddingInvitationContent() {
                       height={300}
                       className="w-full h-full object-cover"
                       loading="lazy"
+                      quality={70}
+                      sizes="(max-width: 768px) 50vw, 300px"
                     />
                   </div>
                 ))}
@@ -2238,6 +2255,8 @@ function WeddingInvitationContent() {
                           width={36}
                           height={36}
                           className="w-full h-full object-cover rounded-full"
+                          loading="lazy"
+                          quality={70}
                         />
                       </div>
                     </div>
@@ -2269,6 +2288,9 @@ function WeddingInvitationContent() {
                     width={500}
                     height={500}
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    quality={75}
+                    sizes="(max-width: 768px) 100vw, 500px"
                   />
                 </div>
 
@@ -2845,7 +2867,7 @@ function WeddingInvitationContent() {
 
       {/* Thank You 섹션 */}
       <section className="w-full pt-16 pb-28 bg-black">
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-[430px] mx-auto px-6">
           {/* 타이틀 */}
           <div className="text-center mb-8">
             <h2 className="text-4xl md:text-5xl font-serif text-zinc-200 mb-6">
@@ -2882,48 +2904,26 @@ function WeddingInvitationContent() {
                 {/* 이미지들을 세 번 반복해서 무한 슬라이드 효과 */}
                 {[...Array(3)].map((_, setIndex) => (
                   <React.Fragment key={setIndex}>
-                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
-                      <img
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-1.jpg"
-                        alt="Wedding Photo"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
-                      <img
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-2.jpg"
-                        alt="Wedding Photo"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
-                      <img
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-3.jpg"
-                        alt="Wedding Photo"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
-                      <img
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981.JPG"
-                        alt="Wedding Photo"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
-                      <img
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/kim.jpg"
-                        alt="Wedding Photo"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
-                      <img
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/park.jpg"
-                        alt="Wedding Photo"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                    {Array.from({ length: 10 }, (_, i) => (
+                      <div
+                        key={i}
+                        className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden"
+                      >
+                        <Image
+                          src={`https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/${
+                            i + 1
+                          }.jpg`}
+                          alt={`Wedding Photo ${i + 1}`}
+                          width={192}
+                          height={288}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          quality={85}
+                          sizes="192px"
+                          unoptimized={false}
+                        />
+                      </div>
+                    ))}
                   </React.Fragment>
                 ))}
               </div>
