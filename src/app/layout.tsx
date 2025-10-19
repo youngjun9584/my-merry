@@ -124,6 +124,22 @@ export default function RootLayout({
           href="https://edi-img.s3.ap-northeast-2.amazonaws.com"
         />
         <link rel="preconnect" href="https://openapi.map.naver.com" />
+
+        {/* 카카오톡 SDK */}
+        <script
+          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.6/kakao.min.js"
+          integrity="sha384-WAtVcQYcmTO/N+C1N+1m6Gp8qxh+3NlnP7X1U7qP6P5dQY/MsRBNTh+e1ahJrkEm"
+          crossOrigin="anonymous"
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined') {
+                window.Kakao.init('adc005d93a4b545f80bf3bc5b171b823');
+              }
+            `,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

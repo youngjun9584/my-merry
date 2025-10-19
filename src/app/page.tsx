@@ -146,6 +146,13 @@ function WeddingInvitationContent() {
   // 갤러리 모달 현재 사진 인덱스 (URL이 아닌 state로 관리)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
+  // 스와이프 관련 상태
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<number | null>(null);
+
   // 지도 로딩 상태 관리
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -190,6 +197,7 @@ function WeddingInvitationContent() {
   const [guestbooks, setGuestbooks] = useState<GuestbookEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const itemsPerPage = 4;
   const totalPages = Math.ceil(guestbooks.length / itemsPerPage);
 
@@ -518,6 +526,78 @@ function WeddingInvitationContent() {
     setCurrentPhotoIndex(newIndex); // state만 업데이트, URL 변경 없음
   };
 
+  // 스와이프 핸들러
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+    if (touchStart !== null) {
+      const offset = e.targetTouches[0].clientX - touchStart;
+      setSwipeOffset(offset);
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) {
+      setSwipeOffset(0);
+      return;
+    }
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      navigatePhoto("next");
+    } else if (isRightSwipe) {
+      navigatePhoto("prev");
+    }
+
+    setSwipeOffset(0);
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  // 마우스 드래그 핸들러
+  const onMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart(e.clientX);
+    setSwipeOffset(0);
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || dragStart === null) return;
+    const offset = e.clientX - dragStart;
+    setSwipeOffset(offset);
+  };
+
+  const onMouseUp = () => {
+    if (!isDragging || dragStart === null) {
+      setIsDragging(false);
+      setSwipeOffset(0);
+      return;
+    }
+
+    const distance = swipeOffset;
+    const isLeftSwipe = distance < -minSwipeDistance;
+    const isRightSwipe = distance > minSwipeDistance;
+
+    if (isLeftSwipe) {
+      navigatePhoto("next");
+    } else if (isRightSwipe) {
+      navigatePhoto("prev");
+    }
+
+    setIsDragging(false);
+    setSwipeOffset(0);
+    setDragStart(null);
+  };
+
   // 더보기/접기 토글 함수
   const handleToggleGallery = () => {
     setIsLoadingMore(true);
@@ -629,6 +709,42 @@ function WeddingInvitationContent() {
     initNaverMap();
   }, [initNaverMap]);
 
+  // URL 복사 함수
+  const copyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText("http://1220wedding.site/");
+      setToastMessage("URL이 복사되었습니다!");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } catch (err) {
+      console.error("URL 복사 실패:", err);
+      setToastMessage("URL 복사에 실패했습니다.");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    }
+  };
+
+  // 카카오톡 공유 함수
+  const shareToKakao = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof window !== "undefined" && (window as any).Kakao) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).Kakao.Share.createCustomButton({
+        container: "#kakaotalk-share-btn",
+        templateId: 125001,
+        templateArgs: {
+          title: "우리 결혼식에 초대합니다",
+          description: "2024년 12월 20일, 함께 축복해 주세요",
+        },
+      });
+    } else {
+      console.error("카카오 SDK가 로드되지 않았습니다.");
+      setToastMessage("카카오톡 공유를 사용할 수 없습니다.");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    }
+  };
+
   // 주소 복사 함수
   const copyAddress = async () => {
     const address =
@@ -672,7 +788,10 @@ function WeddingInvitationContent() {
       />
 
       {/* Hero Section - 메인 이미지 */}
-      <div className="relative h-screen max-w-[430px] mx-auto overflow-hidden">
+      <div
+        className="relative w-full max-w-[430px] mx-auto overflow-hidden"
+        style={{ maxHeight: "900px", height: "100vh" }}
+      >
         <Image
           src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981.jpg"
           alt="용준 & 이슬"
@@ -686,16 +805,15 @@ function WeddingInvitationContent() {
         />
 
         {/* 눈 내리는 효과 */}
-        <div className="absolute top-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
           <div
             className="absolute w-full h-full"
             style={{
-              zIndex: 3,
               backgroundImage:
                 "url('https://cdn2.makedear.com/homepage/img/effect/new1/5.png')",
               backgroundRepeat: "repeat",
               backgroundSize: "auto",
-              opacity: 0.7,
+              opacity: 0.8,
               animation: "snowfall 20s linear infinite",
               WebkitMaskImage:
                 "linear-gradient(to bottom, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%)",
@@ -706,7 +824,7 @@ function WeddingInvitationContent() {
         </div>
 
         {/* 웨이브 배경 - 사진 위에 덮어서 */}
-        <div className="absolute bottom-[-1px] left-0 w-full z-10">
+        <div className="absolute bottom-[-1px] left-0 w-full z-20">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 1440 65"
@@ -1037,8 +1155,30 @@ function WeddingInvitationContent() {
             );
             const currentPhoto = photos[currentIndex];
 
+            // 앞뒤 사진 미리 계산 (프리로드용)
+            const prevIndex =
+              currentIndex > 0 ? currentIndex - 1 : photos.length - 1;
+            const nextIndex =
+              currentIndex < photos.length - 1 ? currentIndex + 1 : 0;
+            const prevPhoto = photos[prevIndex];
+            const nextPhoto = photos[nextIndex];
+
             return (
-              <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+              <div
+                className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                onMouseDown={onMouseDown}
+                onMouseMove={onMouseMove}
+                onMouseUp={onMouseUp}
+                onMouseLeave={() => {
+                  if (isDragging) {
+                    setIsDragging(false);
+                    setSwipeOffset(0);
+                  }
+                }}
+              >
                 {/* 닫기 버튼 */}
                 <button
                   onClick={closeGallery}
@@ -1068,8 +1208,15 @@ function WeddingInvitationContent() {
                   ›
                 </button>
 
-                {/* 메인 이미지 */}
-                <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center p-4">
+                {/* 메인 이미지 컨테이너 */}
+                <div
+                  className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center p-4"
+                  style={{
+                    transform: `translateX(${swipeOffset}px)`,
+                    transition:
+                      swipeOffset === 0 ? "transform 0.3s ease-out" : "none",
+                  }}
+                >
                   {currentPhoto && (
                     <Image
                       src={currentPhoto}
@@ -1077,13 +1224,37 @@ function WeddingInvitationContent() {
                       fill
                       className="object-contain"
                       quality={85}
-                      loading="eager"
+                      priority
                       sizes="100vw"
                       onError={() => {
                         console.error("Image failed to load:", currentPhoto);
                       }}
                     />
                   )}
+                </div>
+
+                {/* 이전 사진 프리로드 (숨김) */}
+                <div className="hidden">
+                  <Image
+                    src={prevPhoto}
+                    alt="Preload prev"
+                    width={1}
+                    height={1}
+                    quality={85}
+                    priority
+                  />
+                </div>
+
+                {/* 다음 사진 프리로드 (숨김) */}
+                <div className="hidden">
+                  <Image
+                    src={nextPhoto}
+                    alt="Preload next"
+                    width={1}
+                    height={1}
+                    quality={85}
+                    priority
+                  />
                 </div>
               </div>
             );
@@ -2999,6 +3170,7 @@ function WeddingInvitationContent() {
 
           <button
             draggable={false}
+            onClick={() => setIsShareModalOpen(true)}
             className="py-[.8em] px-[1em] flex justify-center items-center cursor-pointer"
           >
             <svg
@@ -3054,6 +3226,65 @@ function WeddingInvitationContent() {
       <audio ref={audioRef} loop autoPlay muted preload="auto">
         <source src="/bgm.mp3" type="audio/mpeg" />
       </audio>
+
+      {/* 공유 모달 */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-800">공유하기</h3>
+              <button
+                onClick={() => setIsShareModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M18 6L6 18M6 6L18 18"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* URL 복사 버튼 */}
+              <button
+                onClick={copyUrl}
+                className="w-full flex items-center justify-center space-x-3 bg-gray-100 hover:bg-gray-200 rounded-xl p-4 transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H16C17.1046 21 18 20.1046 18 19V17M8 5C8 6.10457 8.89543 7 10 7H12C13.1046 7 14 6.10457 14 5M8 5C8 3.89543 8.89543 3 10 3H12C13.1046 3 14 3.89543 14 5M16 3H18C19.1046 3 20 3.89543 20 5V7C20 8.10457 19.1046 9 18 9H16C14.8954 9 14 8.10457 14 7V5C14 3.89543 14.8954 3 16 3Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="text-gray-700 font-medium">URL 복사</span>
+              </button>
+
+              {/* 카카오톡 공유 버튼 */}
+              <button
+                id="kakaotalk-share-btn"
+                onClick={shareToKakao}
+                className="w-full flex items-center justify-center space-x-3 bg-yellow-400 hover:bg-yellow-500 rounded-xl p-4 transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 2C6.48 2 2 5.64 2 10c0 2.49 1.62 4.69 4.07 6.27L5.5 21l4.71-2.69C10.87 18.5 11.42 18.5 12 18.5c5.52 0 10-3.64 10-8S17.52 2 12 2z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <span className="text-gray-800 font-medium">카카오톡 공유</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
