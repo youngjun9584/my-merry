@@ -198,8 +198,87 @@ function WeddingInvitationContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isAttendModalOpen, setIsAttendModalOpen] = useState(false);
+  const [attendName, setAttendName] = useState("");
+  const [attendStatus, setAttendStatus] = useState<"참석" | "불참" | "">(
+    "참석"
+  );
+  // 신랑 사진 전환 관찰용
+  const portraitManRef = useRef<HTMLDivElement>(null);
+  const [showAdultPhoto, setShowAdultPhoto] = useState(false);
+  const portraitWomanRef = useRef<HTMLDivElement>(null);
+  const [showBrideAdultPhoto, setShowBrideAdultPhoto] = useState(false);
   const itemsPerPage = 4;
   const totalPages = Math.ceil(guestbooks.length / itemsPerPage);
+
+  // 화면 중앙보다 살짝 아래를 기준으로, 스크롤 위아래 이동 시마다 자연스럽게 토글
+  useEffect(() => {
+    const el = portraitManRef.current;
+    if (!el) return;
+
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const rect = el.getBoundingClientRect();
+      const elementCenter = rect.top + rect.height / 2;
+      const triggerLine = window.innerHeight * 0.55; // 화면 중간보다 살짝 아래
+      // 기준선을 지나면 성인 사진, 위로 올라가면 유년 사진
+      setShowAdultPhoto(elementCenter < triggerLine);
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(update);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    // 초기 상태 계산
+    update();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll as EventListener);
+      window.removeEventListener("resize", onScroll as EventListener);
+    };
+  }, []);
+
+  // 신부 사진 토글
+  useEffect(() => {
+    const el = portraitWomanRef.current;
+    if (!el) return;
+
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const rect = el.getBoundingClientRect();
+      const elementCenter = rect.top + rect.height / 2;
+      const triggerLine = window.innerHeight * 0.55;
+      setShowBrideAdultPhoto(elementCenter < triggerLine);
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(update);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll as EventListener);
+      window.removeEventListener("resize", onScroll as EventListener);
+    };
+  }, []);
+
+  const closeAttendModal = () => {
+    setIsAttendModalOpen(false);
+    setAttendName("");
+  };
 
   // 임시 데이터 로드 함수
   const loadDummyData = useCallback(() => {
@@ -478,14 +557,43 @@ function WeddingInvitationContent() {
     }
   };
 
-  // 갤러리 사진 데이터 (S3 이미지 사용) - 30개
-  const photos = Array.from(
-    { length: 30 },
-    (_, i) =>
-      `https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/${
-        i + 1
-      }.jpg`
-  );
+  // 갤러리 사진 데이터 (S3 이미지 사용) - 34개 직접 정의
+  const photos = [
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/1.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/2.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/3.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/4.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/5.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/6.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/7.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/8.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/9.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/10.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/11.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/12.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/13.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/14.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/15.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/16.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/17.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/18.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/19.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/20.jpeg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/21.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/22.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/23.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/24.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/25.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/26.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/27.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/28.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/29.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/30.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/31.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/32.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/33.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/34.JPG",
+  ];
 
   const openContact = () => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
@@ -980,7 +1088,7 @@ function WeddingInvitationContent() {
               onClick={openContact}
               className="bg-white text-gray-800 w-full py-3 mt-5 text-sm font-medium hover:bg-gray-50 transition-colors border border-gray-200 shadow-sm"
             >
-              연락처 보기
+              연락하기
             </button>
           </div>
         </section>
@@ -1014,13 +1122,13 @@ function WeddingInvitationContent() {
                       </p>
                       <div className="flex justify-center gap-2 mt-1.5">
                         <a
-                          href="tel:010-0000-0000"
+                          href="tel:010-5097-3524"
                           className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-300 transition-colors"
                         >
                           📞
                         </a>
                         <a
-                          href="sms:010-0000-0000"
+                          href="sms:010-5097-3524"
                           className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-300 transition-colors"
                         >
                           💬
@@ -1036,13 +1144,13 @@ function WeddingInvitationContent() {
                         <p className="font-semibold text-gray-800">박문식</p>
                         <div className="flex justify-center gap-1 mt-1">
                           <a
-                            href="tel:010-0000-0000"
+                            href="tel:010-9416-3524"
                             className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors text-xs"
                           >
                             📞
                           </a>
                           <a
-                            href="sms:010-0000-0000"
+                            href="sms:010-9416-3524"
                             className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors text-xs"
                           >
                             💬
@@ -1056,13 +1164,13 @@ function WeddingInvitationContent() {
                         <p className="font-semibold text-gray-800">노영임</p>
                         <div className="flex justify-center gap-1 mt-1">
                           <a
-                            href="tel:010-0000-0000"
+                            href="tel:010-2330-3524"
                             className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors text-xs"
                           >
                             📞
                           </a>
                           <a
-                            href="sms:010-0000-0000"
+                            href="sms:010-2330-3524"
                             className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors text-xs"
                           >
                             💬
@@ -1083,13 +1191,13 @@ function WeddingInvitationContent() {
                       </p>
                       <div className="flex justify-center gap-2 mt-1.5">
                         <a
-                          href="tel:010-0000-0000"
+                          href="tel:010-6697-9998"
                           className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-400 transition-colors"
                         >
                           📞
                         </a>
                         <a
-                          href="sms:010-0000-0000"
+                          href="sms:010-6697-9998"
                           className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-400 transition-colors"
                         >
                           💬
@@ -1105,13 +1213,13 @@ function WeddingInvitationContent() {
                         <p className="font-semibold text-gray-800">김도수</p>
                         <div className="flex justify-center gap-1 mt-1">
                           <a
-                            href="tel:010-0000-0000"
+                            href="tel:010-7373-3331"
                             className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors text-xs"
                           >
                             📞
                           </a>
                           <a
-                            href="sms:010-0000-0000"
+                            href="sms:010-7373-3331"
                             className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors text-xs"
                           >
                             💬
@@ -1125,13 +1233,13 @@ function WeddingInvitationContent() {
                         <p className="font-semibold text-gray-800">박언자</p>
                         <div className="flex justify-center gap-1 mt-1">
                           <a
-                            href="tel:010-0000-0000"
+                            href="tel:010-3482-9982"
                             className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors text-xs"
                           >
                             📞
                           </a>
                           <a
-                            href="sms:010-0000-0000"
+                            href="sms:010-3482-9982"
                             className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors text-xs"
                           >
                             💬
@@ -1299,13 +1407,32 @@ function WeddingInvitationContent() {
           >
             <div
               id="portraitManImg"
+              ref={portraitManRef}
               className="flex-1 overflow-hidden aspect-[1/1.35] rounded-2xl relative"
             >
+              {/* 초기: 아이 사진 */}
+              <Image
+                src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/kid_park.PNG"
+                alt="신랑 유년 사진"
+                fill
+                className={`object-cover select-none pointer-events-none call-out transition-opacity duration-700 ${
+                  showAdultPhoto ? "opacity-0" : "opacity-100"
+                }`}
+                draggable={false}
+                loading="eager"
+                quality={75}
+                sizes="(max-width: 768px) 45vw, 300px"
+                priority
+              />
+
+              {/* 전환: 성인 사진 */}
               <Image
                 src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/park.jpg"
                 alt="신랑 사진"
                 fill
-                className="object-cover select-none pointer-events-none call-out"
+                className={`object-cover select-none pointer-events-none call-out transition-opacity duration-700 ${
+                  showAdultPhoto ? "opacity-100" : "opacity-0"
+                }`}
                 draggable={false}
                 loading="lazy"
                 quality={75}
@@ -1328,12 +1455,33 @@ function WeddingInvitationContent() {
               </svg>
             </div>
 
-            <div className="flex-1 overflow-hidden aspect-[1/1.35] rounded-2xl relative">
+            <div
+              className="flex-1 overflow-hidden aspect-[1/1.35] rounded-2xl relative"
+              ref={portraitWomanRef}
+            >
+              {/* 초기: 신부 유년 사진 */}
+              <Image
+                src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/kid_kim.PNG"
+                alt="신부 유년 사진"
+                fill
+                className={`object-cover select-none pointer-events-none call-out transition-opacity duration-700 ${
+                  showBrideAdultPhoto ? "opacity-0" : "opacity-100"
+                }`}
+                draggable={false}
+                loading="eager"
+                quality={75}
+                sizes="(max-width: 768px) 45vw, 300px"
+                priority
+              />
+
+              {/* 전환: 신부 성인 사진 */}
               <Image
                 src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/kim.jpg"
                 alt="신부 사진"
                 fill
-                className="object-cover select-none pointer-events-none call-out"
+                className={`object-cover select-none pointer-events-none call-out transition-opacity duration-700 ${
+                  showBrideAdultPhoto ? "opacity-100" : "opacity-0"
+                }`}
                 draggable={false}
                 loading="lazy"
                 quality={75}
@@ -1451,7 +1599,7 @@ function WeddingInvitationContent() {
                           <React.Fragment key="wedding-day-markers">
                             <div className="absolute -top-1 -right-1 w-2 h-2 bg-pink-400 rounded-full animate-ping"></div>
                             <div className="absolute top-[calc(110%)] flex justify-center text-xs font-semibold tracking-tight whitespace-nowrap text-gray-600">
-                              <span>3시30분</span>
+                              <span>3시 30분</span>
                             </div>
                           </React.Fragment>
                         )}
@@ -1630,12 +1778,15 @@ function WeddingInvitationContent() {
             <div className="max-w-4xl mx-auto">
               {/* Location 내용 */}
               <div className="flex flex-col justify-center items-center">
-                <h1 className="text-lg font-bold mb-6 text-black whitespace-pre-wrap">
+                <h1
+                  className="GowunDodum text-lg  mb-6 text-black whitespace-pre-wrap"
+                  style={{ fontWeight: "600" }}
+                >
                   오시는 길
                 </h1>
 
                 {/* 점선 구분선 */}
-                <div className="mb-12">
+                <div className="mb-8">
                   <hr
                     className="w-64 mx-auto border-t-2 border-dashed"
                     style={{ borderColor: "rgba(173, 134, 139, 0.5)" }}
@@ -1644,7 +1795,14 @@ function WeddingInvitationContent() {
 
                 {/* 주소 정보 */}
                 <div className="w-full text-center mb-12">
-                  <p className="text-gray-600 mb-4 leading-relaxed">
+                  <p
+                    className="GowunDodum text-gray-600 mb-4 leading-relaxed"
+                    style={{
+                      fontSize: "1rem",
+                      lineHeight: "1.9rem",
+                      fontWeight: "500",
+                    }}
+                  >
                     서울 강남구 테헤란로 406
                     <br />
                     강남 상제리제 센터 2층 르비르모어
@@ -1927,10 +2085,6 @@ function WeddingInvitationContent() {
         {/* 오시는 길 상세 섹션 */}
         <section className="py-10 px-4 bg-white">
           <div className="max-w-4xl mx-auto">
-            <h2 className="section-label whitespace-pre-wrap pb-8 text-center text-sm text-gray-400 tracking-wider">
-              <div style={{ color: "#d099a1" }}>WAY TO COME</div>
-            </h2>
-
             <div className="section-wtc-area-1 px-4 flex flex-col w-full">
               {/* 대중교통 */}
               <div
@@ -2034,13 +2188,11 @@ function WeddingInvitationContent() {
                 >
                   <p className="mb-2">
                     <span style={{ color: "#00a84d" }}>●</span>{" "}
-                    <strong>지하철 2호선</strong>,{" "}
+                    <strong>지하철 2호선 </strong>{" "}
                     <span style={{ color: "#FFC224" }}>●</span>{" "}
                     <strong>수인분당선 선릉역</strong>
                   </p>
-                  <p className="ml-4 text-gray-700">
-                    1번출구 이용시 연결 통로 이동
-                  </p>
+                  <p className="ml-4 text-gray-700">1번 출구 앞 도보 1분거리</p>
                 </div>
               </div>
 
@@ -2140,7 +2292,7 @@ function WeddingInvitationContent() {
                   className="section-wtc-area-3 pt-4 border-t border-dashed tracking-tighter break-all whitespace-pre-wrap text-left"
                   style={{ borderColor: "rgba(173, 134, 139, 0.3)" }}
                 >
-                  <p className="text-gray-700">
+                  <p className="mb-2 text-gray-700">
                     <strong>· 네비게이션</strong>
                   </p>
                   <p className="ml-4 text-gray-700">
@@ -2230,15 +2382,16 @@ function WeddingInvitationContent() {
               <div style={{ color: "#d099a1" }}>INFORMATION</div>
             </h2>
             {/* 한국어 제목 */}
-            <h2
-              className={`text-center text-lg font-bold text-gray-800 mb-8 transition-all duration-700 delay-100 ${
+            <h1
+              className={`GowunDodum text-center text-lg font-bold text-gray-800 mb-8 transition-all duration-700 delay-100 ${
                 visibleSections[6]
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-8"
               }`}
+              style={{ fontWeight: "600" }}
             >
               안내사항
-            </h2>
+            </h1>
 
             {/* 포토부스 이미지 */}
             <div className="mb-12 px-4">
@@ -2310,27 +2463,23 @@ function WeddingInvitationContent() {
                       draggable={false}
                     />
                   </div>
-                  <div className="text-center text-gray-700 leading-relaxed space-y-2 mb-8">
+                  <div
+                    className="GowunDodum text-center text-gray-700 leading-relaxed space-y-2 mb-8"
+                    style={{
+                      fontSize: "1rem",
+                      lineHeight: "1.9rem",
+                      fontWeight: "500",
+                    }}
+                  >
                     <p>한식, 양식, 중식, 일식 등 </p>
                     <p>여러 종류의 요리가 마련되며,</p>
-                    <p className="mt-4">고기류, 채식 메뉴까지</p>
+                    <p>고기류, 채식 메뉴까지</p>
                     <p>다채로운 구성의 뷔페가 마련되어 있습니다.</p>
                     <p>따뜻한 마음으로 준비한 식사를</p>
                     <p>편안히 즐겨주시기 바랍니다.</p>
                   </div>
-                  <div className="flex justify-center">
-                    <a
-                      href="https://www.xn--2w2ba83gt2hc4l.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white border border-gray-300 text-gray-700 px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors font-medium inline-block"
-                    >
-                      르비르모어 구경하기
-                    </a>
-                  </div>
                 </div>
               )}
-
               {/* 장소 탭 */}
               {activeInfoTab === 1 && (
                 <div
@@ -2349,24 +2498,21 @@ function WeddingInvitationContent() {
                       draggable={false}
                     />
                   </div>
-                  <div className="text-center text-gray-700 leading-relaxed space-y-2 mb-8">
-                    <p>웨딩홀 지하 3층 ~ 6층</p>
-                    <p>450대 주차가 가능하고</p>
-                    <p className="mt-4">2시간 무료주차가 가능합니다.</p>
-                  </div>
-                  <div className="flex justify-center">
-                    <a
-                      href="https://www.xn--2w2ba83gt2hc4l.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white border border-gray-300 text-gray-700 px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors font-medium inline-block"
-                    >
-                      르비르모어 구경하기
-                    </a>
+                  <div
+                    className="GowunDodum text-center text-gray-700 leading-relaxed space-y-2 mb-8"
+                    style={{
+                      fontSize: "1rem",
+                      lineHeight: "1.9rem",
+                      fontWeight: "500",
+                    }}
+                  >
+                    <p>건물 내 지하 3층부터 6층까지</p>
+                    <p>주차장이 마련되어 있으며,</p>
+                    <p>약 450대 차량을 수용할 수 있습니다.</p>
+                    <p>방문하신 하객분들께는 2시간 무료 주차가 가능합니다.</p>
                   </div>
                 </div>
               )}
-
               {/* 예식 탭 */}
               {activeInfoTab === 2 && (
                 <div
@@ -2385,23 +2531,19 @@ function WeddingInvitationContent() {
                       draggable={false}
                     />
                   </div>
-                  <div className="text-center text-gray-700 leading-relaxed space-y-2 mb-8">
-                    <p>클리타홀에서 저희 두 사람의</p>
-                    <p>웨딩이 진행 됩니다.</p>
-                    <p>2층 로비에서 웰컴드링크 및 대형스크린이</p>
-                    <p>준비되어 있습니다.</p>
-                    <p className="mt-4">따뜻한 축복의 마음으로 함께 해주시면</p>
-                    <p>감사하겠습니다.</p>
-                  </div>
-                  <div className="flex justify-center">
-                    <a
-                      href="https://www.xn--2w2ba83gt2hc4l.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white border border-gray-300 text-gray-700 px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors font-medium inline-block"
-                    >
-                      르비르모어 구경하기
-                    </a>
+                  <div
+                    className="GowunDodum text-center text-gray-700 leading-relaxed space-y-2 mb-8"
+                    style={{
+                      fontSize: "1rem",
+                      lineHeight: "1.9rem",
+                      fontWeight: "500",
+                    }}
+                  >
+                    <p>클리타홀에서 저희 두 사람의 예식이 진행됩니다.</p>{" "}
+                    <p>2층 로비에는 웰컴드링크가 준비되어 있으며,</p>{" "}
+                    <p>대형 스크린과 소파가 마련되어 있어</p>{" "}
+                    <p>예식 전후로 편히 머무르실 수 있습니다.</p>{" "}
+                    <p>따뜻한 축복의 마음으로 함께해 주시면 감사하겠습니다.</p>
                   </div>
                 </div>
               )}
@@ -2421,7 +2563,7 @@ function WeddingInvitationContent() {
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2px]">
                       <div className="w-full h-full rounded-full overflow-hidden bg-white p-[2px]">
                         <Image
-                          src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-2.jpg"
+                          src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/28.jpg"
                           alt="Profile"
                           width={36}
                           height={36}
@@ -2432,7 +2574,7 @@ function WeddingInvitationContent() {
                       </div>
                     </div>
                     <span className="text-sm font-semibold">
-                      Groom &amp; Bride
+                      Yongjun &amp; Yiseul
                     </span>
                   </div>
                   <button className="text-gray-700">
@@ -2454,7 +2596,7 @@ function WeddingInvitationContent() {
                 {/* 메인 이미지 */}
                 <div className="w-full aspect-square bg-gray-100">
                   <Image
-                    src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/IMG_4981-2.jpg"
+                    src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/28.jpg"
                     alt="Wedding Photo"
                     width={500}
                     height={500}
@@ -2535,7 +2677,7 @@ function WeddingInvitationContent() {
 
                   {/* 좋아요 수 */}
                   <div className="mb-2">
-                    <span className="text-sm font-semibold">❤ 532 Likes</span>
+                    <span className="text-sm font-semibold">❤ 1220 Likes</span>
                   </div>
 
                   {/* 캡션 */}
@@ -2554,7 +2696,7 @@ function WeddingInvitationContent() {
 
         {/* 마음 전하실 곳 */}
         <section id="account" className="mb-16">
-          <div className="bg-white rounded-2xl p-8 shadow-sm">
+          <div className="bg-white  p-8 ">
             <h2
               id="calendarEngTitle"
               data-aos="fade-up"
@@ -2562,17 +2704,31 @@ function WeddingInvitationContent() {
             >
               <div style={{ color: "#d099a1" }}>ACCOUNT</div>
             </h2>
-            <h3 className="text-xl font-medium text-gray-800 text-center mb-6">
+            <h1
+              className={`GowunDodum text-center text-lg font-bold text-gray-800 mb-8 transition-all duration-700 delay-100 ${
+                visibleSections[6]
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
+              }`}
+              style={{ fontWeight: "600" }}
+            >
               마음 전하실 곳
-            </h3>
-            <div className="text-center text-sm text-gray-600 mb-8 leading-relaxed">
-              참석이 어려우신 분들을 위해 계좌번호를 기재하였습니다.
+            </h1>
+            <div
+              className="GowunDodum text-center text-gray-600 mb-8"
+              style={{
+                fontSize: "1rem",
+                lineHeight: "1.9rem",
+                fontWeight: "500",
+              }}
+            >
+              참석이 어려워 직접 축하를 전하지 못하는
               <br />
+              분들을 위해 계좌번호를 기재하였습니다.
               <br />
-              너그러운 마음으로 양해 부탁드립니다.
+              넓은 마음으로 양해 부탁드립니다.
               <br />
-              <br />
-              진심으로 주신 마음은 소중히 간직하여
+              전해주시는 진심은 소중하게 간직하여
               <br />
               좋은 부부의 모습으로 보답하겠습니다.
             </div>
@@ -2617,13 +2773,13 @@ function WeddingInvitationContent() {
                             신랑 박용준
                           </div>
                           <div className="text-xs text-gray-600">
-                            국민 123-456-789012
+                            국민 22620104210329
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
                             onClick={() =>
-                              copyAccountNumber("123-456-789012", "신랑 박용준")
+                              copyAccountNumber("22620104210329", "신랑 박용준")
                             }
                             className={`px-3 py-1 text-xs border rounded transition-colors ${
                               copiedAccount === "신랑 박용준"
@@ -2653,14 +2809,14 @@ function WeddingInvitationContent() {
                             아버지 박문식
                           </div>
                           <div className="text-xs text-gray-600">
-                            NH농협 123-4567-890123
+                            농협 3020303822051
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
                             onClick={() =>
                               copyAccountNumber(
-                                "123-4567-890123",
+                                "3020303822051",
                                 "아버지 박문식"
                               )
                             }
@@ -2692,14 +2848,14 @@ function WeddingInvitationContent() {
                             어머니 노영임
                           </div>
                           <div className="text-xs text-gray-600">
-                            하나 123-4567-890123
+                            농협 2521917093303
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
                             onClick={() =>
                               copyAccountNumber(
-                                "123-4567-890123",
+                                "2521917093303",
                                 "어머니 노영임"
                               )
                             }
@@ -2724,7 +2880,7 @@ function WeddingInvitationContent() {
               </div>
 
               {/* 신부측 드롭다운 */}
-              <div className="border border-gray-200 rounded-lg">
+              <div className="border border-gray-200 rounded-lg mb-8">
                 <button
                   onClick={() => setIsBrideAccountOpen(!isBrideAccountOpen)}
                   className="w-full p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
@@ -2762,16 +2918,13 @@ function WeddingInvitationContent() {
                             신부 김이슬
                           </div>
                           <div className="text-xs text-gray-600">
-                            카카오뱅크 123-4567-890123
+                            우리 1002445190913
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
                             onClick={() =>
-                              copyAccountNumber(
-                                "123-4567-890123",
-                                "신부 김이슬"
-                              )
+                              copyAccountNumber("1002445190913", "신부 김이슬")
                             }
                             className={`px-3 py-1 text-xs border rounded transition-colors ${
                               copiedAccount === "신부 김이슬"
@@ -2801,16 +2954,13 @@ function WeddingInvitationContent() {
                             아버지 김도수
                           </div>
                           <div className="text-xs text-gray-600">
-                            하나 123-4567-890123
+                            국민 068210408205
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
                             onClick={() =>
-                              copyAccountNumber(
-                                "123-4567-890123",
-                                "아버지 김도수"
-                              )
+                              copyAccountNumber("068210408205", "아버지 김도수")
                             }
                             className={`px-3 py-1 text-xs border rounded transition-colors ${
                               copiedAccount === "아버지 김도수"
@@ -2840,14 +2990,14 @@ function WeddingInvitationContent() {
                             어머니 박언자
                           </div>
                           <div className="text-xs text-gray-600">
-                            하나 123-4567-890123
+                            국민 39040104006012
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
                             onClick={() =>
                               copyAccountNumber(
-                                "123-4567-890123",
+                                "39040104006012",
                                 "어머니 박언자"
                               )
                             }
@@ -2875,7 +3025,33 @@ function WeddingInvitationContent() {
         </section>
 
         {/* 방명록 */}
-        <section id="guestbook" className="mb-20 bg-gray-50 py-16">
+        <section id="guestbook" className="mb-20 bg-gray-50 relative">
+          {/* 웨이브 배경 (상단) */}
+          <div className="absolute top-[-84px] left-0 w-full z-10">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 1440 65"
+              preserveAspectRatio="none"
+              className="w-full h-5"
+            >
+              <g
+                fill="rgb(249, 249, 249)"
+                stroke="none"
+                transform="translate(0,65) scale(0.1,-0.1)"
+              >
+                <path d="M6470 629 c-1061 -34 -2002 -142 -3561 -408 -675 -115 -1198 -174 -1899 -214 -30 -2 2755 -3 6190 -3 3435 0 6225 1 6200 3 -25 1 -126 7 -225 13 -536 32 -1103 100 -1740 210 -737 127 -1570 247 -2110 305 -835 89 -1920 125 -2855 94z"></path>
+              </g>
+              <g
+                fill="rgb(249, 249, 249)"
+                stroke="none"
+                transform="translate(0,65) scale(0.1,-0.1)"
+                className="opacity-60"
+              >
+                <path d="M0 322 l0 -322 3073 1 c1689 1 3018 5 2952 10 -705 47 -1210 110 -1970 245 -324 57 -1231 193 -1590 238 -665 83 -1301 126 -2117 142 l-348 7 0 -321z"></path>
+                <path d="M13880 633 c-743 -17 -1425 -69 -2105 -159 -340 -45 -1173 -172 -1460 -223 -763 -135 -1251 -194 -2020 -244 -27 -2 1335 -4 3028 -5 l3077 -2 0 320 0 320 -207 -2 c-115 -1 -255 -3 -313 -5z"></path>
+              </g>
+            </svg>
+          </div>
           <div className="max-w-4xl mx-auto px-8">
             {/* 제목 섹션 */}
             <div className="text-center mb-6">
@@ -2884,24 +3060,34 @@ function WeddingInvitationContent() {
                 data-aos="fade-up"
                 className="section-label whitespace-pre-wrap pb-8 text-center text-sm text-gray-400 tracking-wider"
               >
-                <div style={{ color: "#d099a1" }}>CALENDAR</div>
+                <div style={{ color: "#d099a1" }}>GUESTBOOK</div>
               </h2>
-              <h2
-                className={`text-center text-lg font-bold text-gray-800 mb-8 transition-all duration-700 delay-100 ${
+              <h1
+                className={`GowunDodum text-center text-lg font-bold text-gray-800 mb-8 transition-all duration-700 delay-100 ${
                   visibleSections[6]
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-8"
                 }`}
+                style={{
+                  fontWeight: "600",
+                }}
               >
                 방명록
-              </h2>
-              <div className="mb-12">
+              </h1>
+              <div className="mb-6">
                 <hr
                   className="w-64 mx-auto border-t-2 border-dashed"
                   style={{ borderColor: "rgba(173, 134, 139, 0.5)" }}
                 />
               </div>
-              <div className="text-center text-sm text-gray-600 leading-relaxed">
+              <div
+                className="GowunDodum text-center text-sm text-gray-600 leading-relaxed"
+                style={{
+                  fontSize: "1rem",
+                  lineHeight: "1.9rem",
+                  fontWeight: "500",
+                }}
+              >
                 <p>따뜻한 마음이 담긴 축하의 글을 남겨주시면</p>
                 <p>소중한 추억으로 간직하겠습니다.</p>
               </div>
@@ -2955,7 +3141,14 @@ function WeddingInvitationContent() {
 
                         {/* 메시지 내용 */}
                         <div>
-                          <div className="text-base text-gray-700 break-all leading-relaxed">
+                          <div
+                            className="GowunDodum text-base text-gray-700 break-all leading-relaxed"
+                            style={{
+                              fontSize: "1rem",
+                              lineHeight: "1.9rem",
+                              fontWeight: "500",
+                            }}
+                          >
                             {entry.content}
                           </div>
                         </div>
@@ -3034,6 +3227,54 @@ function WeddingInvitationContent() {
             </div>
           </div>
         </section>
+
+        {/* 참석 정보 섹션 */}
+        <section className="py-8 px-4 mb-5">
+          <div className="max-w-md mx-auto">
+            {/* 영문 제목 */}
+            <h2 className="section-label whitespace-pre-wrap pb-8 text-center text-sm text-gray-400 tracking-wider">
+              <div style={{ color: "#d099a1" }}>RSVP</div>
+            </h2>
+
+            {/* 한국어 제목 */}
+            <h1
+              className="GowunDodum subtitle whitespace-pre-wrap pb-6 text-center text-lg font-bold text-gray-800"
+              style={{ fontWeight: "600" }}
+            >
+              <div>참석 정보</div>
+            </h1>
+
+            <div className="mb-6">
+              <hr
+                className="w-64 mx-auto border-t-2 border-dashed"
+                style={{ borderColor: "rgba(173, 134, 139, 0.5)" }}
+              />
+            </div>
+
+            {/* 본문 */}
+            <div
+              className="GowunDodum section-attendance-area-1 whitespace-pre-wrap text-center text-sm text-gray-600 leading-relaxed"
+              style={{
+                fontSize: "1rem",
+                lineHeight: "1.9rem",
+                fontWeight: "500",
+              }}
+            >
+              <p>참석의 부담은 가지지 말아주시고</p>
+              <p>정성껏 준비하기 위해 여쭙는 것이니</p>
+              <p>참석 정보를 알려주시면 감사하겠습니다.</p>
+            </div>
+
+            {/* 참석 정보 전달하기 버튼 */}
+            <button
+              onClick={() => setIsAttendModalOpen(true)}
+              className="GowunDodum style-button whitespace-pre-wrap first-of-type:mt-8 mx-auto px-9 py-4 flex flex-col items-center justify-center sm:hover:bg-opacity-50 border rounded-xl tracking-tighter break-all cursor-pointer bg-[#f1f1f1]"
+              style={{ width: "260px", height: "69px" }}
+            >
+              <div>참석 정보 전달하기</div>
+            </button>
+          </div>
+        </section>
       </div>
 
       {/* Thank You 섹션 */}
@@ -3044,11 +3285,8 @@ function WeddingInvitationContent() {
             <h2 className="text-4xl md:text-5xl font-serif text-zinc-200 mb-6">
               Thank You
             </h2>
-            <p className="text-base md:text-lg text-zinc-300 leading-relaxed">
+            <p className="GowunDodum text-base md:text-lg text-zinc-300 leading-relaxed">
               축하해주시는 모든 분들께 진심으로 감사드립니다.
-              <br />
-              신랑, 신부에게 언제든 축하 인사 건네주시면 기쁘게
-              답장드리겠습니다.
             </p>
           </div>
 
@@ -3280,6 +3518,114 @@ function WeddingInvitationContent() {
                   />
                 </svg>
                 <span className="text-gray-800 font-medium">카카오톡 공유</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 참석 정보 모달 */}
+      {isAttendModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-800">
+                참석 정보 전달하기
+              </h3>
+              <button
+                onClick={closeAttendModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M18 6L6 18M6 6L18 18"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* 이름 입력 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  성함
+                </label>
+                <input
+                  type="text"
+                  value={attendName}
+                  onChange={(e) => setAttendName(e.target.value)}
+                  placeholder="성함을 입력해 주세요."
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                />
+              </div>
+
+              {/* 참석 여부 선택 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  참석 여부
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAttendStatus("참석")}
+                    className={`h-11 rounded-lg border text-sm font-medium transition-colors ${
+                      attendStatus === "참석"
+                        ? "bg-black text-white border-black"
+                        : "bg-white text-gray-700 border-gray-300"
+                    }`}
+                  >
+                    참석
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAttendStatus("불참")}
+                    className={`h-11 rounded-lg border text-sm font-medium transition-colors ${
+                      attendStatus === "불참"
+                        ? "bg-black text-white border-black"
+                        : "bg-white text-gray-700 border-gray-300"
+                    }`}
+                  >
+                    불참
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 하단 액션 */}
+            <div className="mt-8 grid grid-cols-2 gap-3">
+              <button
+                onClick={closeAttendModal}
+                className="h-12 rounded-lg border border-gray-300 text-gray-700 font-semibold"
+              >
+                닫기
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/attend", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        name: attendName,
+                        is_come: attendStatus,
+                      }),
+                    });
+                    if (!res.ok) {
+                      throw new Error("failed");
+                    }
+                  } catch (_e) {
+                    // no-op: 간단 요청이므로 에러 토스트 없이 닫기만 유지
+                  } finally {
+                    closeAttendModal();
+                  }
+                }}
+                className="h-12 rounded-lg bg-black text-white font-semibold"
+              >
+                참석 정보 전달하기
               </button>
             </div>
           </div>

@@ -17,3 +17,9 @@ model photo {
   img_id     String @id @db.VarChar(600)
   like_count Int    @default(0)
 }
+
+model come {
+  idx     Int     @id @default(autoincrement())
+  name    String  @db.VarChar(600)
+  is_come String? @db.VarChar(50)
+}
