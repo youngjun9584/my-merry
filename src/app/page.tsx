@@ -559,40 +559,40 @@ function WeddingInvitationContent() {
 
   // 갤러리 사진 데이터 (S3 이미지 사용) - 34개 직접 정의
   const photos = [
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/1.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/2.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/3.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/4.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/5.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/6.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/7.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/8.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/9.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/10.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/11.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/12.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/13.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/14.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/15.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/16.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/17.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/18.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/19.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/20.jpeg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/21.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/22.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/23.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/24.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/25.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/26.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/27.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/28.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/29.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/30.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/31.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/32.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/33.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/34.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo1.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo2.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo3.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo4.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo5.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo6.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo7.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo8.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo9.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo10.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo11.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo12.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo13.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo14.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo15.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo16.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo17.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo18.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo19.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo20.jpeg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo21.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo22.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo23.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo24.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo25.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo26.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo27.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo28.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo29.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo30.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo31.jpg",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo32.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo33.JPG",
+    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo34.JPG",
   ];
 
   const openContact = () => {
@@ -2563,7 +2563,7 @@ function WeddingInvitationContent() {
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 p-[2px]">
                       <div className="w-full h-full rounded-full overflow-hidden bg-white p-[2px]">
                         <Image
-                          src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/28.jpg"
+                          src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo28.jpg"
                           alt="Profile"
                           width={36}
                           height={36}
@@ -2596,7 +2596,7 @@ function WeddingInvitationContent() {
                 {/* 메인 이미지 */}
                 <div className="w-full aspect-square bg-gray-100">
                   <Image
-                    src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/28.jpg"
+                    src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo28.jpg"
                     alt="Wedding Photo"
                     width={500}
                     height={500}
@@ -3313,26 +3313,177 @@ function WeddingInvitationContent() {
                 {/* 이미지들을 세 번 반복해서 무한 슬라이드 효과 */}
                 {[...Array(3)].map((_, setIndex) => (
                   <React.Fragment key={setIndex}>
-                    {Array.from({ length: 10 }, (_, i) => (
-                      <div
-                        key={i}
-                        className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden"
-                      >
-                        <Image
-                          src={`https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/${
-                            i + 1
-                          }.jpg`}
-                          alt={`Wedding Photo ${i + 1}`}
-                          width={192}
-                          height={288}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          quality={85}
-                          sizes="192px"
-                          unoptimized={false}
-                        />
-                      </div>
-                    ))}
+                    {/* 1-10번 이미지 */}
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo1.jpg"
+                        alt="Wedding Photo 1"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo2.JPG"
+                        alt="Wedding Photo 2"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo3.JPG"
+                        alt="Wedding Photo 3"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo4.JPG"
+                        alt="Wedding Photo 4"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo5.jpg"
+                        alt="Wedding Photo 5"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo6.jpg"
+                        alt="Wedding Photo 6"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo7.JPG"
+                        alt="Wedding Photo 7"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo8.jpg"
+                        alt="Wedding Photo 8"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo9.JPG"
+                        alt="Wedding Photo 9"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo10.jpg"
+                        alt="Wedding Photo 10"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    {/* 11-20번 이미지 */}
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo11.jpg"
+                        alt="Wedding Photo 11"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo12.jpg"
+                        alt="Wedding Photo 12"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
+                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
+                      <Image
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo13.jpg"
+                        alt="Wedding Photo 13"
+                        width={192}
+                        height={288}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={85}
+                        sizes="192px"
+                        unoptimized={false}
+                      />
+                    </div>
                   </React.Fragment>
                 ))}
               </div>
