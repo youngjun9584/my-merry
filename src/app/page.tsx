@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 
 // 네이버지도 API 타입 선언
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -149,9 +155,16 @@ function WeddingInvitationContent() {
   // 스와이프 관련 상태
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [touchStartTime, setTouchStartTime] = useState<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // 인스타그램 좋아요 상태
+  const [isLiked, setIsLiked] = useState(false);
+  const [showLikeAnimation, setShowLikeAnimation] = useState(false);
+  const [lastTap, setLastTap] = useState(0);
 
   // 지도 로딩 상태 관리
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -560,42 +573,67 @@ function WeddingInvitationContent() {
   };
 
   // 갤러리 사진 데이터 (S3 이미지 사용) - 34개 직접 정의
-  const photos = [
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo1.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo2.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo3.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo4.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo5.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo6.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo7.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo8.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo9.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo10.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo11.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo12.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo13.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo14.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo15.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo16.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo17.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo18.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo19.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo20.jpeg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo21.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo22.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo23.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo24.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo25.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo26.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo27.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo28.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo29.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo30.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo31.jpg",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo32.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo33.JPG",
-    "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo34.JPG",
-  ];
+  const photos = useMemo(
+    () => [
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo1.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo2.JPG",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo3.JPG",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo4.JPG",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo5.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo6.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo7.JPG",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo8.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo9.JPG",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo10.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo11.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo12.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo13.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo14.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo15.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo16.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo17.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo18.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo19.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo20.jpeg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo21.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo22.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo23.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo24.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo25.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo26.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo27.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo28.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo29.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo30.JPG",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo31.jpg",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo32.JPG",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo33.JPG",
+      "https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo34.JPG",
+    ],
+    []
+  );
+
+  // 갤러리 사진 preload
+  useEffect(() => {
+    // 페이지 로드 후 천천히 모든 사진을 preload
+    const preloadImages = async () => {
+      for (let i = 0; i < photos.length; i++) {
+        // 각 이미지를 순차적으로 preload
+        const img = document.createElement("img");
+        img.src = photos[i];
+        // 100ms 간격으로 천천히 로드
+        await new Promise<void>((resolve) => setTimeout(resolve, 100));
+      }
+      console.log("✅ 갤러리 사진 preload 완료");
+    };
+
+    // 페이지 로드 후 1초 뒤에 시작 (초기 로딩에 영향 없도록)
+    const timer = setTimeout(() => {
+      preloadImages();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [photos]);
 
   const openContact = () => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
@@ -623,6 +661,9 @@ function WeddingInvitationContent() {
   };
 
   const navigatePhoto = (direction: "prev" | "next") => {
+    // 이미 트랜지션 중이면 무시
+    if (isTransitioning) return;
+
     let newIndex;
 
     if (direction === "prev") {
@@ -633,79 +674,189 @@ function WeddingInvitationContent() {
         currentPhotoIndex < photos.length - 1 ? currentPhotoIndex + 1 : 0;
     }
 
-    setCurrentPhotoIndex(newIndex); // state만 업데이트, URL 변경 없음
+    // 먼저 인덱스를 변경하고 애니메이션 시작
+    setIsTransitioning(true);
+    setCurrentPhotoIndex(newIndex);
+
+    // 트랜지션 완료 후 상태 리셋
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 300);
   };
 
-  // 스와이프 핸들러
+  // 스와이프 핸들러 - 개선된 버전
   const minSwipeDistance = 50;
+  const minSwipeVelocity = 0.3; // 최소 스와이프 속도 (px/ms)
+
+  // 저항 효과 함수 - 드래그 범위 제한
+  const applyResistance = (offset: number, maxOffset: number) => {
+    const resistance = 0.35; // 저항 계수
+    if (Math.abs(offset) > maxOffset) {
+      const excess = Math.abs(offset) - maxOffset;
+      const resistedExcess = excess * resistance;
+      return offset > 0
+        ? maxOffset + resistedExcess
+        : -(maxOffset + resistedExcess);
+    }
+    return offset;
+  };
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
+    setTouchStartTime(Date.now());
+    setIsTransitioning(false);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
     setTouchEnd(e.targetTouches[0].clientX);
     if (touchStart !== null) {
-      const offset = e.targetTouches[0].clientX - touchStart;
+      const rawOffset = e.targetTouches[0].clientX - touchStart;
+      // 화면 너비의 80%를 최대 드래그 거리로 설정
+      const maxOffset = window.innerWidth * 0.8;
+      const offset = applyResistance(rawOffset, maxOffset);
       setSwipeOffset(offset);
     }
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) {
+    if (!touchStart || !touchEnd || !touchStartTime) {
       setSwipeOffset(0);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setTouchStart(null);
+        setTouchEnd(null);
+        setTouchStartTime(null);
+        setIsTransitioning(false);
+      }, 350);
       return;
     }
 
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+    const timeElapsed = Date.now() - touchStartTime;
+    const velocity = Math.abs(distance) / timeElapsed; // px/ms
 
-    if (isLeftSwipe) {
-      navigatePhoto("next");
-    } else if (isRightSwipe) {
-      navigatePhoto("prev");
+    // 빠른 스와이프는 더 민감하게, 느린 드래그는 거리로 판단
+    const shouldSwipe =
+      velocity > minSwipeVelocity || Math.abs(distance) > minSwipeDistance;
+
+    const isLeftSwipe = distance > 0 && shouldSwipe;
+    const isRightSwipe = distance < 0 && shouldSwipe;
+
+    if (isLeftSwipe || isRightSwipe) {
+      setIsTransitioning(true);
+
+      // 다음/이전 사진으로 변경
+      if (isLeftSwipe) {
+        const newIndex =
+          currentPhotoIndex < photos.length - 1 ? currentPhotoIndex + 1 : 0;
+        setCurrentPhotoIndex(newIndex);
+      } else {
+        const newIndex =
+          currentPhotoIndex > 0 ? currentPhotoIndex - 1 : photos.length - 1;
+        setCurrentPhotoIndex(newIndex);
+      }
+
+      // offset 리셋
+      setSwipeOffset(0);
+      setTouchStart(null);
+      setTouchEnd(null);
+      setTouchStartTime(null);
+
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
+    } else {
+      // 스와이프 취소 - 원래 위치로
+      setIsTransitioning(true);
+      setSwipeOffset(0);
+      setTouchStart(null);
+      setTouchEnd(null);
+      setTouchStartTime(null);
+
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
     }
-
-    setSwipeOffset(0);
-    setTouchStart(null);
-    setTouchEnd(null);
   };
 
-  // 마우스 드래그 핸들러
+  // 마우스 드래그 핸들러 - 개선된 버전
   const onMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDragging(true);
     setDragStart(e.clientX);
+    setTouchStartTime(Date.now());
     setSwipeOffset(0);
+    setIsTransitioning(false);
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || dragStart === null) return;
-    const offset = e.clientX - dragStart;
+    e.preventDefault();
+    const rawOffset = e.clientX - dragStart;
+    const maxOffset = window.innerWidth * 0.8;
+    const offset = applyResistance(rawOffset, maxOffset);
     setSwipeOffset(offset);
   };
 
   const onMouseUp = () => {
-    if (!isDragging || dragStart === null) {
+    if (!isDragging || dragStart === null || !touchStartTime) {
       setIsDragging(false);
       setSwipeOffset(0);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setDragStart(null);
+        setTouchStartTime(null);
+        setIsTransitioning(false);
+      }, 350);
       return;
     }
 
     const distance = swipeOffset;
-    const isLeftSwipe = distance < -minSwipeDistance;
-    const isRightSwipe = distance > minSwipeDistance;
+    const timeElapsed = Date.now() - touchStartTime;
+    const velocity = Math.abs(distance) / timeElapsed;
 
-    if (isLeftSwipe) {
-      navigatePhoto("next");
-    } else if (isRightSwipe) {
-      navigatePhoto("prev");
+    const shouldSwipe =
+      velocity > minSwipeVelocity || Math.abs(distance) > minSwipeDistance;
+
+    const isLeftSwipe = distance < 0 && shouldSwipe;
+    const isRightSwipe = distance > 0 && shouldSwipe;
+
+    if (isLeftSwipe || isRightSwipe) {
+      setIsTransitioning(true);
+
+      // 다음/이전 사진으로 변경
+      if (isLeftSwipe) {
+        const newIndex =
+          currentPhotoIndex < photos.length - 1 ? currentPhotoIndex + 1 : 0;
+        setCurrentPhotoIndex(newIndex);
+      } else {
+        const newIndex =
+          currentPhotoIndex > 0 ? currentPhotoIndex - 1 : photos.length - 1;
+        setCurrentPhotoIndex(newIndex);
+      }
+
+      // offset 리셋
+      setIsDragging(false);
+      setSwipeOffset(0);
+      setDragStart(null);
+      setTouchStartTime(null);
+
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
+    } else {
+      // 스와이프 취소 - 원래 위치로
+      setIsTransitioning(true);
+      setSwipeOffset(0);
+      setIsDragging(false);
+      setDragStart(null);
+      setTouchStartTime(null);
+
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
     }
-
-    setIsDragging(false);
-    setSwipeOffset(0);
-    setDragStart(null);
   };
 
   // 더보기/접기 토글 함수
@@ -715,6 +866,27 @@ function WeddingInvitationContent() {
       setIsGalleryExpanded(!isGalleryExpanded);
       setIsLoadingMore(false);
     }, 300); // 로딩 효과를 위한 지연
+  };
+
+  // 인스타그램 좋아요 핸들러
+  const handleLikeClick = () => {
+    setIsLiked(!isLiked);
+  };
+
+  // 이미지 더블클릭 핸들러
+  const handleImageDoubleClick = () => {
+    const currentTime = new Date().getTime();
+    const tapGap = currentTime - lastTap;
+
+    if (tapGap < 300 && tapGap > 0) {
+      // 더블클릭 감지
+      setIsLiked(true);
+      setShowLikeAnimation(true);
+      setTimeout(() => {
+        setShowLikeAnimation(false);
+      }, 1000);
+    }
+    setLastTap(currentTime);
   };
 
   // 네이버 지도 API 초기화
@@ -1275,19 +1447,16 @@ function WeddingInvitationContent() {
               0,
               Math.min(currentPhotoIndex, photos.length - 1)
             );
-            const currentPhoto = photos[currentIndex];
 
-            // 앞뒤 사진 미리 계산 (프리로드용)
+            // 앞뒤 사진 미리 계산
             const prevIndex =
               currentIndex > 0 ? currentIndex - 1 : photos.length - 1;
             const nextIndex =
               currentIndex < photos.length - 1 ? currentIndex + 1 : 0;
-            const prevPhoto = photos[prevIndex];
-            const nextPhoto = photos[nextIndex];
 
             return (
               <div
-                className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
+                className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center overflow-hidden"
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
@@ -1298,6 +1467,8 @@ function WeddingInvitationContent() {
                   if (isDragging) {
                     setIsDragging(false);
                     setSwipeOffset(0);
+                    setIsTransitioning(true);
+                    setTouchStartTime(null);
                   }
                 }}
               >
@@ -1330,53 +1501,81 @@ function WeddingInvitationContent() {
                   ›
                 </button>
 
-                {/* 메인 이미지 컨테이너 */}
-                <div
-                  className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center p-4"
-                  style={{
-                    transform: `translateX(${swipeOffset}px)`,
-                    transition:
-                      swipeOffset === 0 ? "transform 0.3s ease-out" : "none",
-                  }}
-                >
-                  {currentPhoto && (
-                    <Image
-                      src={currentPhoto}
-                      alt={`Gallery ${currentIndex + 1}`}
-                      fill
-                      className="object-contain"
-                      quality={85}
-                      priority
-                      sizes="100vw"
-                      onError={() => {
-                        console.error("Image failed to load:", currentPhoto);
-                      }}
-                    />
-                  )}
-                </div>
+                {/* 캐러셀 컨테이너 - 3개의 이미지를 가로로 배치 */}
+                <div className="relative w-full h-full overflow-hidden">
+                  <div
+                    className="flex h-full"
+                    style={{
+                      transform: `translate3d(calc(-100% + ${swipeOffset}px), 0, 0)`,
+                      transition: isTransitioning
+                        ? "transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)"
+                        : "none",
+                      willChange: "transform",
+                    }}
+                  >
+                    {/* 이전 이미지 */}
+                    <div
+                      key={`photo-${prevIndex}`}
+                      className="relative w-full h-full flex-shrink-0 flex items-center justify-center p-4 pointer-events-none"
+                    >
+                      <div className="relative max-w-4xl max-h-[90vh] w-full h-full">
+                        <Image
+                          key={photos[prevIndex]}
+                          src={photos[prevIndex]}
+                          alt={`Gallery ${prevIndex + 1}`}
+                          fill
+                          className="object-contain select-none"
+                          quality={90}
+                          sizes="100vw"
+                          draggable={false}
+                          unoptimized
+                          loading="eager"
+                        />
+                      </div>
+                    </div>
 
-                {/* 이전 사진 프리로드 (숨김) */}
-                <div className="hidden">
-                  <Image
-                    src={prevPhoto}
-                    alt="Preload prev"
-                    width={1}
-                    height={1}
-                    quality={85}
-                    priority
-                  />
-                </div>
+                    {/* 현재 이미지 */}
+                    <div
+                      key={`photo-${currentIndex}`}
+                      className="relative w-full h-full flex-shrink-0 flex items-center justify-center p-4 pointer-events-none"
+                    >
+                      <div className="relative max-w-4xl max-h-[90vh] w-full h-full">
+                        <Image
+                          key={photos[currentIndex]}
+                          src={photos[currentIndex]}
+                          alt={`Gallery ${currentIndex + 1}`}
+                          fill
+                          className="object-contain select-none"
+                          quality={90}
+                          priority
+                          sizes="100vw"
+                          draggable={false}
+                          unoptimized
+                        />
+                      </div>
+                    </div>
 
-                {/* 다음 사진 프리로드 (숨김) */}
-                <div className="hidden">
-                  <Image
-                    src={nextPhoto}
-                    alt="Preload next"
-                    width={1}
-                    height={1}
-                    quality={85}
-                    priority
-                  />
+                    {/* 다음 이미지 */}
+                    <div
+                      key={`photo-${nextIndex}`}
+                      className="relative w-full h-full flex-shrink-0 flex items-center justify-center p-4 pointer-events-none"
+                    >
+                      <div className="relative max-w-4xl max-h-full">
+                        <Image
+                          key={photos[nextIndex]}
+                          src={photos[nextIndex]}
+                          alt={`Gallery ${nextIndex + 1}`}
+                          fill
+                          className="object-contain select-none"
+                          quality={90}
+                          sizes="100vw"
+                          draggable={false}
+                          unoptimized
+                          loading="eager"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             );
@@ -1667,7 +1866,7 @@ function WeddingInvitationContent() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
               {photos
                 .slice(0, isGalleryExpanded ? photos.length : 6)
-                .map((photo, index) => (
+                .map((photo: string, index: number) => (
                   <div
                     key={index}
                     className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
@@ -2608,7 +2807,10 @@ function WeddingInvitationContent() {
                 </div>
 
                 {/* 메인 이미지 */}
-                <div className="w-full aspect-square bg-gray-100">
+                <div
+                  className="w-full aspect-square bg-gray-100 relative cursor-pointer select-none"
+                  onClick={handleImageDoubleClick}
+                >
                   <Image
                     src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo28.jpg"
                     alt="Wedding Photo"
@@ -2618,7 +2820,23 @@ function WeddingInvitationContent() {
                     loading="lazy"
                     quality={75}
                     sizes="(max-width: 768px) 100vw, 500px"
+                    draggable={false}
                   />
+                  {/* 더블클릭 하트 애니메이션 */}
+                  {showLikeAnimation && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <svg
+                        className="w-24 h-24 text-white drop-shadow-lg animate-ping"
+                        style={{
+                          animation: "heartPop 1s ease-out",
+                        }}
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                      </svg>
+                    </div>
+                  )}
                 </div>
 
                 {/* 액션 버튼 */}
@@ -2626,16 +2844,22 @@ function WeddingInvitationContent() {
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-4">
                       {/* 좋아요 */}
-                      <button className="hover:text-gray-500 transition-colors">
+                      <button
+                        onClick={handleLikeClick}
+                        className="transition-all duration-200 transform active:scale-125"
+                      >
                         <svg
                           width="24"
                           height="24"
                           viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
+                          fill={isLiked ? "#ef4444" : "none"}
+                          stroke={isLiked ? "#ef4444" : "currentColor"}
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
+                          className={`transition-all duration-200 ${
+                            isLiked ? "scale-110" : ""
+                          }`}
                         >
                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
@@ -2691,7 +2915,9 @@ function WeddingInvitationContent() {
 
                   {/* 좋아요 수 */}
                   <div className="mb-2">
-                    <span className="text-sm font-semibold">❤ 1220 Likes</span>
+                    <span className="text-sm font-semibold">
+                      {isLiked ? "❤️ 1221 Likes" : "❤ 1220 Likes"}
+                    </span>
                   </div>
 
                   {/* 캡션 */}
@@ -2852,9 +3078,9 @@ function WeddingInvitationContent() {
                               ? "복사됨!"
                               : "복사"}
                           </button>
-                          <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
+                          {/* <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
                             pay
-                          </button>
+                          </button> */}
                         </div>
                       </div>
                     </div>
@@ -2891,9 +3117,9 @@ function WeddingInvitationContent() {
                               ? "복사됨!"
                               : "복사"}
                           </button>
-                          <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
+                          {/* <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
                             pay
-                          </button>
+                          </button> */}
                         </div>
                       </div>
                     </div>
@@ -3002,9 +3228,9 @@ function WeddingInvitationContent() {
                               ? "복사됨!"
                               : "복사"}
                           </button>
-                          <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
+                          {/* <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
                             pay
-                          </button>
+                          </button> */}
                         </div>
                       </div>
                     </div>
@@ -3041,9 +3267,9 @@ function WeddingInvitationContent() {
                               ? "복사됨!"
                               : "복사"}
                           </button>
-                          <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
+                          {/* <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
                             pay
-                          </button>
+                          </button> */}
                         </div>
                       </div>
                     </div>
