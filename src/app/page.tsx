@@ -156,6 +156,7 @@ function WeddingInvitationContent() {
   // 지도 로딩 상태 관리
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isUrlCopied, setIsUrlCopied] = useState(false);
 
   // 계좌 정보 드롭다운 상태 관리
   const [isGroomAccountOpen, setIsGroomAccountOpen] = useState(false);
@@ -199,6 +200,7 @@ function WeddingInvitationContent() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAttendModalOpen, setIsAttendModalOpen] = useState(false);
+  const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [attendName, setAttendName] = useState("");
   const [attendStatus, setAttendStatus] = useState<"참석" | "불참" | "">(
     "참석"
@@ -821,9 +823,13 @@ function WeddingInvitationContent() {
   const copyUrl = async () => {
     try {
       await navigator.clipboard.writeText("http://1220wedding.site/");
+      setIsUrlCopied(true);
       setToastMessage("URL이 복사되었습니다!");
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
+      setTimeout(() => {
+        setIsUrlCopied(false);
+        setShowToast(false);
+      }, 2000);
     } catch (err) {
       console.error("URL 복사 실패:", err);
       setToastMessage("URL 복사에 실패했습니다.");
@@ -837,8 +843,7 @@ function WeddingInvitationContent() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (typeof window !== "undefined" && (window as any).Kakao) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).Kakao.Share.createCustomButton({
-        container: "#kakaotalk-share-btn",
+      (window as any).Kakao.Share.sendCustom({
         templateId: 125001,
         templateArgs: {
           title: "우리 결혼식에 초대합니다",
@@ -876,6 +881,15 @@ function WeddingInvitationContent() {
         console.error("대체 복사 방법도 실패:", fallbackError);
       }
       document.body.removeChild(textArea);
+    }
+  };
+
+  // 메뉴 섹션으로 스크롤 이동 함수
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      setIsMenuModalOpen(false);
     }
   };
 
@@ -1740,6 +1754,7 @@ function WeddingInvitationContent() {
 
         {/* Location 섹션 */}
         <section
+          id="location"
           className="relative py-10 px-4"
           style={{ backgroundColor: "rgb(249, 249, 249)" }}
         >
@@ -1807,32 +1822,9 @@ function WeddingInvitationContent() {
                     <br />
                     강남 상제리제 센터 2층 르비르모어
                   </p>
-                  <div className="mb-4">
-                    <a
-                      href="tel:02-501-7000"
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md"
-                      draggable={false}
-                    >
-                      <svg
-                        className="w-4 h-4 text-gray-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                        />
-                      </svg>
-                      <span className="font-medium">02-501-7000</span>
-                    </a>
-                  </div>
-
                   {/* 주소 복사 버튼 */}
                   <button
-                    className="copy-btn2 mt-2 mx-auto py-2 px-5 relative flex justify-center items-center h-9 bg-white rounded-lg border text-sm tracking-tighter transition-all duration-300 hover:shadow-lg"
+                    className="copy-btn2 mt-2 mx-auto py-2 px-5 w-[200px] relative flex justify-center items-center h-10 bg-white rounded-lg border  tracking-tighter transition-all duration-300 hover:shadow-lg"
                     style={{ border: "1px solid rgba(173, 134, 139, 0.3)" }}
                     onClick={copyAddress}
                   >
@@ -1872,6 +1864,28 @@ function WeddingInvitationContent() {
                       </svg>
                     )}
                   </button>
+                  <div className="mt-4">
+                    <a
+                      href="tel:02-501-7000"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md"
+                      draggable={false}
+                    >
+                      <svg
+                        className="w-4 h-4 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        />
+                      </svg>
+                      <span className="font-medium">02-501-7000</span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* 지도 영역 */}
@@ -2791,7 +2805,15 @@ function WeddingInvitationContent() {
                               ? "복사됨!"
                               : "복사"}
                           </button>
-                          <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
+                          <button
+                            onClick={() =>
+                              window.open(
+                                "https://qr.kakaopay.com/FDqV0FEIM",
+                                "_blank"
+                              )
+                            }
+                            className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium hover:bg-yellow-500 transition-colors"
+                          >
                             pay
                           </button>
                         </div>
@@ -2936,7 +2958,15 @@ function WeddingInvitationContent() {
                               ? "복사됨!"
                               : "복사"}
                           </button>
-                          <button className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium">
+                          <button
+                            onClick={() =>
+                              window.open(
+                                "https://qr.kakaopay.com/FEvm205NE",
+                                "_blank"
+                              )
+                            }
+                            className="px-3 py-1 text-xs text-white bg-yellow-400 rounded font-medium hover:bg-yellow-500 transition-colors"
+                          >
                             pay
                           </button>
                         </div>
@@ -3229,7 +3259,7 @@ function WeddingInvitationContent() {
         </section>
 
         {/* 참석 정보 섹션 */}
-        <section className="py-8 px-4 mb-5">
+        <section id="attend" className="py-8 px-4 mb-5">
           <div className="max-w-md mx-auto">
             {/* 영문 제목 */}
             <h2 className="section-label whitespace-pre-wrap pb-8 text-center text-sm text-gray-400 tracking-wider">
@@ -3387,6 +3417,7 @@ function WeddingInvitationContent() {
           <button
             draggable={false}
             className="py-[.8em] px-[1em] flex justify-center items-center cursor-pointer"
+            onClick={() => setIsMenuModalOpen(true)}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -3491,18 +3522,41 @@ function WeddingInvitationContent() {
               {/* URL 복사 버튼 */}
               <button
                 onClick={copyUrl}
-                className="w-full flex items-center justify-center space-x-3 bg-gray-100 hover:bg-gray-200 rounded-xl p-4 transition-colors"
+                className={`w-full flex items-center justify-center space-x-3 rounded-xl p-4 transition-colors ${
+                  isUrlCopied
+                    ? "bg-green-500 hover:bg-green-600"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H16C17.1046 21 18 20.1046 18 19V17M8 5C8 6.10457 8.89543 7 10 7H12C13.1046 7 14 6.10457 14 5M8 5C8 3.89543 8.89543 3 10 3H12C13.1046 3 14 3.89543 14 5M16 3H18C19.1046 3 20 3.89543 20 5V7C20 8.10457 19.1046 9 18 9H16C14.8954 9 14 8.10457 14 7V5C14 3.89543 14.8954 3 16 3Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span className="text-gray-700 font-medium">URL 복사</span>
+                {isUrlCopied ? (
+                  <>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M5 13l4 4L19 7"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className="text-white font-medium">
+                      복사가 성공했어용
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H16C17.1046 21 18 20.1046 18 19V17M8 5C8 6.10457 8.89543 7 10 7H12C13.1046 7 14 6.10457 14 5M8 5C8 3.89543 8.89543 3 10 3H12C13.1046 3 14 3.89543 14 5M16 3H18C19.1046 3 20 3.89543 20 5V7C20 8.10457 19.1046 9 18 9H16C14.8954 9 14 8.10457 14 7V5C14 3.89543 14.8954 3 16 3Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className="text-gray-700 font-medium">URL 복사</span>
+                  </>
+                )}
               </button>
 
               {/* 카카오톡 공유 버튼 */}
@@ -3627,6 +3681,235 @@ function WeddingInvitationContent() {
               >
                 참석 정보 전달하기
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 메뉴 모달 */}
+      {isMenuModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-end justify-center"
+          onClick={() => setIsMenuModalOpen(false)}
+        >
+          <div
+            className={`bg-white w-full max-h-[85vh] overflow-hidden transition-all duration-300 ${
+              isMenuModalOpen ? "translate-y-0" : "translate-y-full"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 헤더 */}
+            <div className="sticky top-0 bg-white px-6 pt-6 pb-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-bold text-gray-900 tracking-tight">
+                  Menu
+                </h3>
+                <button
+                  onClick={() => setIsMenuModalOpen(false)}
+                  className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M18 6L6 18M6 6L18 18"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div className="mt-4 h-px bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200"></div>
+            </div>
+
+            {/* 메뉴 목록 */}
+            <div className="overflow-y-auto max-h-[calc(85vh-100px)] pb-6">
+              <nav className="px-6 py-4 space-y-1">
+                <button
+                  onClick={() => scrollToSection("greeting")}
+                  className="w-full group flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-all duration-200 rounded-lg"
+                >
+                  <span className="text-gray-900 font-medium text-lg group-hover:text-black">
+                    모시는 글
+                  </span>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
+                  >
+                    <path
+                      d="M9 5l7 7-7 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => scrollToSection("editor-section-portrait")}
+                  className="w-full group flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-all duration-200 rounded-lg"
+                >
+                  <span className="text-gray-900 font-medium text-lg group-hover:text-black">
+                    신랑 & 신부 소개
+                  </span>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
+                  >
+                    <path
+                      d="M9 5l7 7-7 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => scrollToSection("editor-section-calendar")}
+                  className="w-full group flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-all duration-200 rounded-lg"
+                >
+                  <span className="text-gray-900 font-medium text-lg group-hover:text-black">
+                    캘린더 & D-DAY
+                  </span>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
+                  >
+                    <path
+                      d="M9 5l7 7-7 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => scrollToSection("gallery")}
+                  className="w-full group flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-all duration-200 rounded-lg"
+                >
+                  <span className="text-gray-900 font-medium text-lg group-hover:text-black">
+                    갤러리
+                  </span>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
+                  >
+                    <path
+                      d="M9 5l7 7-7 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => scrollToSection("location")}
+                  className="w-full group flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-all duration-200 rounded-lg"
+                >
+                  <span className="text-gray-900 font-medium text-lg group-hover:text-black">
+                    오시는 길
+                  </span>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
+                  >
+                    <path
+                      d="M9 5l7 7-7 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => scrollToSection("account")}
+                  className="w-full group flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-all duration-200 rounded-lg"
+                >
+                  <span className="text-gray-900 font-medium text-lg group-hover:text-black">
+                    마음 전하실 곳
+                  </span>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
+                  >
+                    <path
+                      d="M9 5l7 7-7 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => scrollToSection("guestbook")}
+                  className="w-full group flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-all duration-200 rounded-lg"
+                >
+                  <span className="text-gray-900 font-medium text-lg group-hover:text-black">
+                    방명록
+                  </span>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
+                  >
+                    <path
+                      d="M9 5l7 7-7 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => scrollToSection("attend")}
+                  className="w-full group flex items-center justify-between px-4 py-4 text-left hover:bg-gray-50 transition-all duration-200 rounded-lg"
+                >
+                  <span className="text-gray-900 font-medium text-lg group-hover:text-black">
+                    참석 정보
+                  </span>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all"
+                  >
+                    <path
+                      d="M9 5l7 7-7 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              </nav>
             </div>
           </div>
         </div>
