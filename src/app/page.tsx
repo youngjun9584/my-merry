@@ -3251,7 +3251,7 @@ function WeddingInvitationContent() {
                     {/* 1-10번 이미지 */}
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo1.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old1.jpg"
                         alt="Wedding Photo 1"
                         width={192}
                         height={288}
@@ -3264,7 +3264,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo2.JPG"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old2.jpg"
                         alt="Wedding Photo 2"
                         width={192}
                         height={288}
@@ -3277,7 +3277,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo3.JPG"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old3.jpg"
                         alt="Wedding Photo 3"
                         width={192}
                         height={288}
@@ -3290,7 +3290,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo4.JPG"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old4.jpg"
                         alt="Wedding Photo 4"
                         width={192}
                         height={288}
@@ -3303,7 +3303,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo5.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old5.jpg"
                         alt="Wedding Photo 5"
                         width={192}
                         height={288}
@@ -3316,7 +3316,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo6.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old6.jpg"
                         alt="Wedding Photo 6"
                         width={192}
                         height={288}
@@ -3329,7 +3329,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo7.JPG"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old7.jpg"
                         alt="Wedding Photo 7"
                         width={192}
                         height={288}
@@ -3342,7 +3342,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo8.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old8.jpg"
                         alt="Wedding Photo 8"
                         width={192}
                         height={288}
@@ -3355,7 +3355,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo9.JPG"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old9.jpg"
                         alt="Wedding Photo 9"
                         width={192}
                         height={288}
@@ -3368,7 +3368,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo10.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old10.jpg"
                         alt="Wedding Photo 10"
                         width={192}
                         height={288}
@@ -3382,7 +3382,7 @@ function WeddingInvitationContent() {
                     {/* 11-20번 이미지 */}
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo11.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old11.jpg"
                         alt="Wedding Photo 11"
                         width={192}
                         height={288}
@@ -3395,7 +3395,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo12.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old12.jpg"
                         alt="Wedding Photo 12"
                         width={192}
                         height={288}
@@ -3408,7 +3408,7 @@ function WeddingInvitationContent() {
                     </div>
                     <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
                       <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/photo13.jpg"
+                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old13.jpg"
                         alt="Wedding Photo 13"
                         width={192}
                         height={288}
