@@ -41,6 +41,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import Script from "next/script";
 import GuestbookModal from "@/components/GuestbookModal";
+import EmblaGallery from "@/components/EmblaGallery";
 import JsonLd from "./JsonLd";
 
 function DdayCounter() {
@@ -151,15 +152,6 @@ function WeddingInvitationContent() {
 
   // 갤러리 모달 현재 사진 인덱스 (URL이 아닌 state로 관리)
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-
-  // 스와이프 관련 상태
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [touchStartTime, setTouchStartTime] = useState<number | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<number | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // 인스타그램 좋아요 상태
   const [isLiked, setIsLiked] = useState(false);
@@ -613,24 +605,36 @@ function WeddingInvitationContent() {
     []
   );
 
-  // 갤러리 사진 preload
+  // 갤러리 사진 점진적 preload
   useEffect(() => {
     // 페이지 로드 후 천천히 모든 사진을 preload
     const preloadImages = async () => {
+      console.log("🔄 갤러리 사진 점진적 로딩 시작...");
+
       for (let i = 0; i < photos.length; i++) {
         // 각 이미지를 순차적으로 preload
         const img = document.createElement("img");
         img.src = photos[i];
-        // 100ms 간격으로 천천히 로드
-        await new Promise<void>((resolve) => setTimeout(resolve, 100));
+
+        // 로딩 완료 이벤트 리스너
+        img.onload = () => {
+          console.log(`✅ 사진 ${i + 1}/${photos.length} 로딩 완료`);
+        };
+
+        img.onerror = () => {
+          console.warn(`❌ 사진 ${i + 1}/${photos.length} 로딩 실패`);
+        };
+
+        // 300ms 간격으로 천천히 로드 (더 부드럽게)
+        await new Promise<void>((resolve) => setTimeout(resolve, 300));
       }
-      console.log("✅ 갤러리 사진 preload 완료");
+      console.log("🎉 갤러리 사진 preload 완료");
     };
 
-    // 페이지 로드 후 1초 뒤에 시작 (초기 로딩에 영향 없도록)
+    // 페이지 로드 후 2초 뒤에 시작 (초기 로딩에 영향 없도록)
     const timer = setTimeout(() => {
       preloadImages();
-    }, 1000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [photos]);
@@ -660,203 +664,9 @@ function WeddingInvitationContent() {
     router.push(`?${newSearchParams.toString()}`, { scroll: false });
   };
 
-  const navigatePhoto = (direction: "prev" | "next") => {
-    // 이미 트랜지션 중이면 무시
-    if (isTransitioning) return;
-
-    let newIndex;
-
-    if (direction === "prev") {
-      newIndex =
-        currentPhotoIndex > 0 ? currentPhotoIndex - 1 : photos.length - 1;
-    } else {
-      newIndex =
-        currentPhotoIndex < photos.length - 1 ? currentPhotoIndex + 1 : 0;
-    }
-
-    // 먼저 인덱스를 변경하고 애니메이션 시작
-    setIsTransitioning(true);
+  // 갤러리 인덱스 변경 핸들러
+  const handleGalleryIndexChange = (newIndex: number) => {
     setCurrentPhotoIndex(newIndex);
-
-    // 트랜지션 완료 후 상태 리셋
-    setTimeout(() => {
-      setIsTransitioning(false);
-    }, 300);
-  };
-
-  // 스와이프 핸들러 - 개선된 버전
-  const minSwipeDistance = 50;
-  const minSwipeVelocity = 0.3; // 최소 스와이프 속도 (px/ms)
-
-  // 저항 효과 함수 - 드래그 범위 제한
-  const applyResistance = (offset: number, maxOffset: number) => {
-    const resistance = 0.35; // 저항 계수
-    if (Math.abs(offset) > maxOffset) {
-      const excess = Math.abs(offset) - maxOffset;
-      const resistedExcess = excess * resistance;
-      return offset > 0
-        ? maxOffset + resistedExcess
-        : -(maxOffset + resistedExcess);
-    }
-    return offset;
-  };
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-    setTouchStartTime(Date.now());
-    setIsTransitioning(false);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-    if (touchStart !== null) {
-      const rawOffset = e.targetTouches[0].clientX - touchStart;
-      // 화면 너비의 80%를 최대 드래그 거리로 설정
-      const maxOffset = window.innerWidth * 0.8;
-      const offset = applyResistance(rawOffset, maxOffset);
-      setSwipeOffset(offset);
-    }
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd || !touchStartTime) {
-      setSwipeOffset(0);
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setTouchStart(null);
-        setTouchEnd(null);
-        setTouchStartTime(null);
-        setIsTransitioning(false);
-      }, 350);
-      return;
-    }
-
-    const distance = touchStart - touchEnd;
-    const timeElapsed = Date.now() - touchStartTime;
-    const velocity = Math.abs(distance) / timeElapsed; // px/ms
-
-    // 빠른 스와이프는 더 민감하게, 느린 드래그는 거리로 판단
-    const shouldSwipe =
-      velocity > minSwipeVelocity || Math.abs(distance) > minSwipeDistance;
-
-    const isLeftSwipe = distance > 0 && shouldSwipe;
-    const isRightSwipe = distance < 0 && shouldSwipe;
-
-    if (isLeftSwipe || isRightSwipe) {
-      setIsTransitioning(true);
-
-      // 다음/이전 사진으로 변경
-      if (isLeftSwipe) {
-        const newIndex =
-          currentPhotoIndex < photos.length - 1 ? currentPhotoIndex + 1 : 0;
-        setCurrentPhotoIndex(newIndex);
-      } else {
-        const newIndex =
-          currentPhotoIndex > 0 ? currentPhotoIndex - 1 : photos.length - 1;
-        setCurrentPhotoIndex(newIndex);
-      }
-
-      // offset 리셋
-      setSwipeOffset(0);
-      setTouchStart(null);
-      setTouchEnd(null);
-      setTouchStartTime(null);
-
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 300);
-    } else {
-      // 스와이프 취소 - 원래 위치로
-      setIsTransitioning(true);
-      setSwipeOffset(0);
-      setTouchStart(null);
-      setTouchEnd(null);
-      setTouchStartTime(null);
-
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 300);
-    }
-  };
-
-  // 마우스 드래그 핸들러 - 개선된 버전
-  const onMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStart(e.clientX);
-    setTouchStartTime(Date.now());
-    setSwipeOffset(0);
-    setIsTransitioning(false);
-  };
-
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || dragStart === null) return;
-    e.preventDefault();
-    const rawOffset = e.clientX - dragStart;
-    const maxOffset = window.innerWidth * 0.8;
-    const offset = applyResistance(rawOffset, maxOffset);
-    setSwipeOffset(offset);
-  };
-
-  const onMouseUp = () => {
-    if (!isDragging || dragStart === null || !touchStartTime) {
-      setIsDragging(false);
-      setSwipeOffset(0);
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setDragStart(null);
-        setTouchStartTime(null);
-        setIsTransitioning(false);
-      }, 350);
-      return;
-    }
-
-    const distance = swipeOffset;
-    const timeElapsed = Date.now() - touchStartTime;
-    const velocity = Math.abs(distance) / timeElapsed;
-
-    const shouldSwipe =
-      velocity > minSwipeVelocity || Math.abs(distance) > minSwipeDistance;
-
-    const isLeftSwipe = distance < 0 && shouldSwipe;
-    const isRightSwipe = distance > 0 && shouldSwipe;
-
-    if (isLeftSwipe || isRightSwipe) {
-      setIsTransitioning(true);
-
-      // 다음/이전 사진으로 변경
-      if (isLeftSwipe) {
-        const newIndex =
-          currentPhotoIndex < photos.length - 1 ? currentPhotoIndex + 1 : 0;
-        setCurrentPhotoIndex(newIndex);
-      } else {
-        const newIndex =
-          currentPhotoIndex > 0 ? currentPhotoIndex - 1 : photos.length - 1;
-        setCurrentPhotoIndex(newIndex);
-      }
-
-      // offset 리셋
-      setIsDragging(false);
-      setSwipeOffset(0);
-      setDragStart(null);
-      setTouchStartTime(null);
-
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 300);
-    } else {
-      // 스와이프 취소 - 원래 위치로
-      setIsTransitioning(true);
-      setSwipeOffset(0);
-      setIsDragging(false);
-      setDragStart(null);
-      setTouchStartTime(null);
-
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 300);
-    }
   };
 
   // 더보기/접기 토글 함수
@@ -1440,146 +1250,15 @@ function WeddingInvitationContent() {
           </div>
         )}
 
-        {/* 갤러리 모달 */}
-        {isGalleryOpen &&
-          (() => {
-            const currentIndex = Math.max(
-              0,
-              Math.min(currentPhotoIndex, photos.length - 1)
-            );
-
-            // 앞뒤 사진 미리 계산
-            const prevIndex =
-              currentIndex > 0 ? currentIndex - 1 : photos.length - 1;
-            const nextIndex =
-              currentIndex < photos.length - 1 ? currentIndex + 1 : 0;
-
-            return (
-              <div
-                className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center overflow-hidden"
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
-                onMouseDown={onMouseDown}
-                onMouseMove={onMouseMove}
-                onMouseUp={onMouseUp}
-                onMouseLeave={() => {
-                  if (isDragging) {
-                    setIsDragging(false);
-                    setSwipeOffset(0);
-                    setIsTransitioning(true);
-                    setTouchStartTime(null);
-                  }
-                }}
-              >
-                {/* 닫기 버튼 */}
-                <button
-                  onClick={closeGallery}
-                  className="absolute top-4 right-4 text-white hover:text-gray-300 z-60 w-12 h-12 flex items-center justify-center text-2xl"
-                >
-                  ×
-                </button>
-
-                {/* 사진 카운터 */}
-                <div className="absolute top-4 left-4 text-white z-60 bg-black bg-opacity-50 px-3 py-1 rounded-full text-sm">
-                  {currentIndex + 1} / {photos.length}
-                </div>
-
-                {/* 이전 버튼 */}
-                <button
-                  onClick={() => navigatePhoto("prev")}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 z-60 w-12 h-12 flex items-center justify-center text-3xl bg-black bg-opacity-50 rounded-full"
-                >
-                  ‹
-                </button>
-
-                {/* 다음 버튼 */}
-                <button
-                  onClick={() => navigatePhoto("next")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 z-60 w-12 h-12 flex items-center justify-center text-3xl bg-black bg-opacity-50 rounded-full"
-                >
-                  ›
-                </button>
-
-                {/* 캐러셀 컨테이너 - 3개의 이미지를 가로로 배치 */}
-                <div className="relative w-full h-full overflow-hidden">
-                  <div
-                    className="flex h-full"
-                    style={{
-                      transform: `translate3d(calc(-100% + ${swipeOffset}px), 0, 0)`,
-                      transition: isTransitioning
-                        ? "transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)"
-                        : "none",
-                      willChange: "transform",
-                    }}
-                  >
-                    {/* 이전 이미지 */}
-                    <div
-                      key={`photo-${prevIndex}`}
-                      className="relative w-full h-full flex-shrink-0 flex items-center justify-center p-4 pointer-events-none"
-                    >
-                      <div className="relative max-w-4xl max-h-[90vh] w-full h-full">
-                        <Image
-                          key={photos[prevIndex]}
-                          src={photos[prevIndex]}
-                          alt={`Gallery ${prevIndex + 1}`}
-                          fill
-                          className="object-contain select-none"
-                          quality={90}
-                          sizes="100vw"
-                          draggable={false}
-                          unoptimized
-                          loading="eager"
-                        />
-                      </div>
-                    </div>
-
-                    {/* 현재 이미지 */}
-                    <div
-                      key={`photo-${currentIndex}`}
-                      className="relative w-full h-full flex-shrink-0 flex items-center justify-center p-4 pointer-events-none"
-                    >
-                      <div className="relative max-w-4xl max-h-[90vh] w-full h-full">
-                        <Image
-                          key={photos[currentIndex]}
-                          src={photos[currentIndex]}
-                          alt={`Gallery ${currentIndex + 1}`}
-                          fill
-                          className="object-contain select-none"
-                          quality={90}
-                          priority
-                          sizes="100vw"
-                          draggable={false}
-                          unoptimized
-                        />
-                      </div>
-                    </div>
-
-                    {/* 다음 이미지 */}
-                    <div
-                      key={`photo-${nextIndex}`}
-                      className="relative w-full h-full flex-shrink-0 flex items-center justify-center p-4 pointer-events-none"
-                    >
-                      <div className="relative max-w-4xl max-h-full">
-                        <Image
-                          key={photos[nextIndex]}
-                          src={photos[nextIndex]}
-                          alt={`Gallery ${nextIndex + 1}`}
-                          fill
-                          className="object-contain select-none"
-                          quality={90}
-                          sizes="100vw"
-                          draggable={false}
-                          unoptimized
-                          loading="eager"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
+        {/* 갤러리 모달 - Embla Carousel 사용 */}
+        {isGalleryOpen && (
+          <EmblaGallery
+            photos={photos}
+            currentIndex={currentPhotoIndex}
+            onClose={closeGallery}
+            onIndexChange={handleGalleryIndexChange}
+          />
+        )}
 
         {/* 포트레이트 섹션 */}
         <section
