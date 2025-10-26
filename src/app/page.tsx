@@ -3213,7 +3213,7 @@ function WeddingInvitationContent() {
       </div>
 
       {/* Thank You 섹션 */}
-      <section className="w-full pt-16 pb-28 bg-black">
+      <section className="w-full pt-16 pb-40 bg-black">
         <div className="max-w-[430px] mx-auto px-6">
           {/* 타이틀 */}
           <div className="text-center mb-8">
@@ -3221,7 +3221,8 @@ function WeddingInvitationContent() {
               Thank You
             </h2>
             <p className="GowunDodum text-base md:text-lg text-zinc-300 leading-relaxed">
-              축하해주시는 모든 분들께 진심으로 감사드립니다.
+              축하해주시는 모든 분들께 <br />
+              진심으로 감사드립니다.
             </p>
           </div>
 
@@ -3305,19 +3306,6 @@ function WeddingInvitationContent() {
                       <Image
                         src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old5.jpg"
                         alt="Wedding Photo 5"
-                        width={192}
-                        height={288}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        quality={85}
-                        sizes="192px"
-                        unoptimized={false}
-                      />
-                    </div>
-                    <div className="relative flex-shrink-0 w-48 h-72 rounded overflow-hidden">
-                      <Image
-                        src="https://edi-img.s3.ap-northeast-2.amazonaws.com/uploads/merry/old6.jpg"
-                        alt="Wedding Photo 6"
                         width={192}
                         height={288}
                         className="w-full h-full object-cover"
@@ -3423,6 +3411,13 @@ function WeddingInvitationContent() {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* 제작자 표시 */}
+          <div className="text-center mt-12 pt-6 border-t border-zinc-800">
+            <p className="text-zinc-500 text-xs tracking-wider">
+              Made with ❤️ by 박용준
+            </p>
           </div>
         </div>
       </section>
