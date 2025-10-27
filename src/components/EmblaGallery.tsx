@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 
 interface EmblaGalleryProps {
   photos: string[];
@@ -19,12 +19,15 @@ export default function EmblaGallery({
 }: EmblaGalleryProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
-    startIndex: currentIndex,
   });
 
   const [selectedIndex, setSelectedIndex] = useState(currentIndex);
-  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadedImages] = useState<Set<number>>(
+    new Set(Array.from({ length: photos.length }, (_, i) => i))
+  ); // 모든 이미지 로드된 것으로 간주 (프리로드 컴포넌트가 처리)
+
+  const isFirstRenderRef = useRef(true);
+  const prevCurrentIndexRef = useRef(currentIndex);
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
@@ -34,6 +37,35 @@ export default function EmblaGallery({
     if (emblaApi) emblaApi.scrollNext();
   }, [emblaApi]);
 
+  // 닫기 핸들러 최적화
+  const handleClose = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
+    },
+    [onClose]
+  );
+
+  // 이전/다음 버튼 핸들러 최적화
+  const handlePrev = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      scrollPrev();
+    },
+    [scrollPrev]
+  );
+
+  const handleNext = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      scrollNext();
+    },
+    [scrollNext]
+  );
+
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     const newIndex = emblaApi.selectedScrollSnap();
@@ -41,70 +73,81 @@ export default function EmblaGallery({
     onIndexChange(newIndex);
   }, [emblaApi, onIndexChange]);
 
-  // 점진적 이미지 로딩
-  const preloadImages = useCallback(async () => {
-    const totalImages = photos.length;
-    let loadedCount = 0;
-
-    for (let i = 0; i < totalImages; i++) {
-      // 현재 사진과 앞뒤 2장씩 우선 로딩
-      const isNearCurrent = Math.abs(i - selectedIndex) <= 2;
-      const isNearStart = i < 3;
-      const isNearEnd = i >= totalImages - 3;
-
-      if (isNearCurrent || isNearStart || isNearEnd) {
-        // 우선순위 이미지는 즉시 로딩
-        setLoadedImages((prev) => new Set([...prev, i]));
-        loadedCount++;
-        setLoadingProgress((loadedCount / totalImages) * 100);
-      } else {
-        // 나머지 이미지는 천천히 로딩 (500ms 간격)
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setLoadedImages((prev) => new Set([...prev, i]));
-        loadedCount++;
-        setLoadingProgress((loadedCount / totalImages) * 100);
-      }
-    }
-  }, [photos.length, selectedIndex]);
-
   useEffect(() => {
     if (!emblaApi) return;
     onSelect();
     emblaApi.on("select", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
   }, [emblaApi, onSelect]);
 
-  // 갤러리가 열릴 때 이미지 로딩 시작
+  // emblaApi가 준비되고 처음 렌더링될 때 currentIndex로 이동
   useEffect(() => {
-    preloadImages();
-  }, [preloadImages]);
+    if (!emblaApi) return;
+
+    if (isFirstRenderRef.current) {
+      console.log(`📸 Embla 초기화 - 사진 ${currentIndex + 1}번으로 즉시 이동`);
+      // 즉시 이동 (애니메이션 없이)
+      emblaApi.scrollTo(currentIndex, true);
+      setSelectedIndex(currentIndex);
+      isFirstRenderRef.current = false;
+      prevCurrentIndexRef.current = currentIndex;
+    }
+  }, [emblaApi, currentIndex]);
+
+  // currentIndex prop이 변경될 때마다 스크롤
+  useEffect(() => {
+    if (!emblaApi || isFirstRenderRef.current) return;
+
+    if (prevCurrentIndexRef.current !== currentIndex) {
+      console.log(
+        `📸 currentIndex 변경 감지: ${prevCurrentIndexRef.current + 1} → ${
+          currentIndex + 1
+        }`
+      );
+      emblaApi.scrollTo(currentIndex, false);
+      setSelectedIndex(currentIndex);
+      prevCurrentIndexRef.current = currentIndex;
+    }
+  }, [emblaApi, currentIndex]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-90 z-[9999] flex items-center justify-center overflow-hidden">
       {/* 닫기 버튼 */}
       <button
-        onClick={onClose}
-        className="absolute top-4 right-4 text-white hover:text-gray-300 z-60 w-12 h-12 flex items-center justify-center text-2xl"
+        onClick={handleClose}
+        className="absolute top-4 right-4 text-white hover:text-gray-300 z-[10000] w-12 h-12 flex items-center justify-center text-3xl bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition-opacity cursor-pointer"
+        style={{ pointerEvents: "auto" }}
+        type="button"
+        aria-label="갤러리 닫기"
       >
         ×
       </button>
 
       {/* 사진 카운터 */}
-      <div className="absolute top-4 left-4 text-white z-60 bg-black bg-opacity-50 px-3 py-1 rounded-full text-sm">
+      <div className="absolute top-4 left-4 text-white z-[10000] bg-black bg-opacity-50 px-3 py-1 rounded-full text-sm pointer-events-none">
         {selectedIndex + 1} / {photos.length}
       </div>
 
       {/* 이전 버튼 */}
       <button
-        onClick={scrollPrev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 z-60 w-8 h-8 flex items-center justify-center text-2xl opacity-60 hover:opacity-100 transition-opacity"
+        onClick={handlePrev}
+        className="absolute left-2 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 z-[10000] w-12 h-12 flex items-center justify-center text-3xl opacity-60 hover:opacity-100 transition-opacity bg-black bg-opacity-30 rounded-full cursor-pointer"
+        style={{ pointerEvents: "auto" }}
+        type="button"
+        aria-label="이전 사진"
       >
         ‹
       </button>
 
       {/* 다음 버튼 */}
       <button
-        onClick={scrollNext}
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 z-60 w-8 h-8 flex items-center justify-center text-2xl opacity-60 hover:opacity-100 transition-opacity"
+        onClick={handleNext}
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 z-[10000] w-12 h-12 flex items-center justify-center text-3xl opacity-60 hover:opacity-100 transition-opacity bg-black bg-opacity-30 rounded-full cursor-pointer"
+        style={{ pointerEvents: "auto" }}
+        type="button"
+        aria-label="다음 사진"
       >
         ›
       </button>

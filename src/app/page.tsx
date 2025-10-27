@@ -144,7 +144,9 @@ function WeddingInvitationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const isContactOpen = searchParams.get("contact") === "open";
-  const isGalleryOpen = searchParams.get("gallery") === "open";
+
+  // 갤러리 모달 상태 관리 (빠른 반응을 위해 state 사용)
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
   // 갤러리 표시 상태 관리
   const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
@@ -605,39 +607,7 @@ function WeddingInvitationContent() {
     []
   );
 
-  // 갤러리 사진 점진적 preload
-  useEffect(() => {
-    // 페이지 로드 후 천천히 모든 사진을 preload
-    const preloadImages = async () => {
-      console.log("🔄 갤러리 사진 점진적 로딩 시작...");
-
-      for (let i = 0; i < photos.length; i++) {
-        // 각 이미지를 순차적으로 preload
-        const img = document.createElement("img");
-        img.src = photos[i];
-
-        // 로딩 완료 이벤트 리스너
-        img.onload = () => {
-          console.log(`✅ 사진 ${i + 1}/${photos.length} 로딩 완료`);
-        };
-
-        img.onerror = () => {
-          console.warn(`❌ 사진 ${i + 1}/${photos.length} 로딩 실패`);
-        };
-
-        // 300ms 간격으로 천천히 로드 (더 부드럽게)
-        await new Promise<void>((resolve) => setTimeout(resolve, 300));
-      }
-      console.log("🎉 갤러리 사진 preload 완료");
-    };
-
-    // 페이지 로드 후 2초 뒤에 시작 (초기 로딩에 영향 없도록)
-    const timer = setTimeout(() => {
-      preloadImages();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [photos]);
+  // 갤러리 사진 preload는 EmblaGallery 컴포넌트에서 처리
 
   const openContact = () => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
@@ -652,22 +622,39 @@ function WeddingInvitationContent() {
   };
 
   const openGallery = (photoIndex: number) => {
+    console.log(`🖱️ 사진 ${photoIndex + 1}번 클릭 - 갤러리 열기`);
     setCurrentPhotoIndex(photoIndex); // state에 인덱스 저장
-    const newSearchParams = new URLSearchParams(searchParams.toString());
-    newSearchParams.set("gallery", "open");
-    router.push(`?${newSearchParams.toString()}`, { scroll: false });
+    setIsGalleryOpen(true); // 즉시 모달 열기
   };
 
   const closeGallery = () => {
-    const newSearchParams = new URLSearchParams(searchParams.toString());
-    newSearchParams.delete("gallery");
-    router.push(`?${newSearchParams.toString()}`, { scroll: false });
+    setIsGalleryOpen(false); // 즉시 모달 닫기
   };
 
   // 갤러리 인덱스 변경 핸들러
   const handleGalleryIndexChange = (newIndex: number) => {
     setCurrentPhotoIndex(newIndex);
   };
+
+  // ESC 키로 갤러리 닫기
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isGalleryOpen) {
+        closeGallery();
+      }
+    };
+
+    if (isGalleryOpen) {
+      window.addEventListener("keydown", handleEscKey);
+      // body 스크롤 방지
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleEscKey);
+      document.body.style.overflow = "";
+    };
+  }, [isGalleryOpen]);
 
   // 더보기/접기 토글 함수
   const handleToggleGallery = () => {
@@ -878,7 +865,7 @@ function WeddingInvitationContent() {
   return (
     <div
       className="min-h-screen"
-      style={{ backgroundColor: "rgb(249, 249, 249)" }}
+      style={{ backgroundColor: "rgb(249, 249, 249)", color: "#000000" }}
     >
       {/* 구조화 데이터 (SEO) */}
       <JsonLd />
@@ -995,7 +982,7 @@ function WeddingInvitationContent() {
               <div className="py-2"></div>
 
               <p className="text-base poem-line">
-                우리 사랑을 늘 봄처럼 따뜻하고
+                우리 사랑은 늘 봄처럼 따뜻하고
               </p>
               <p className="text-base poem-line">
                 간혹, 여름처럼 뜨거울 겁니다.
@@ -1047,7 +1034,7 @@ function WeddingInvitationContent() {
 
         {/* 연락하기 버튼 */}
         <section className="mb-16 px-6">
-          <div className="text-center">
+          <div className="text-center GowunDodum">
             <p className="text-gray-600 mb-4 leading-relaxed">
               저희 두 사람이
               <br />
@@ -1250,7 +1237,7 @@ function WeddingInvitationContent() {
           </div>
         )}
 
-        {/* 갤러리 모달 - Embla Carousel 사용 */}
+        {/* 갤러리 모달 */}
         {isGalleryOpen && (
           <EmblaGallery
             photos={photos}
@@ -1259,6 +1246,17 @@ function WeddingInvitationContent() {
             onIndexChange={handleGalleryIndexChange}
           />
         )}
+
+        {/* 갤러리 이미지 프리로드 컴포넌트 (숨김) */}
+        <div style={{ display: "none" }}>
+          {photos.map((photo, index) => (
+            <img
+              key={`preload-${index}`}
+              src={photo}
+              alt={`preload ${index}`}
+            />
+          ))}
+        </div>
 
         {/* 포트레이트 섹션 */}
         <section
@@ -3415,7 +3413,7 @@ function WeddingInvitationContent() {
 
           {/* 제작자 표시 */}
           <div className="text-center mt-12 pt-6 border-t border-zinc-800">
-            <p className="text-zinc-500 text-xs tracking-wider">
+            <p className="text-zinc-400 text-xs tracking-wider font-semibold">
               Made with ❤️ by 박용준
             </p>
           </div>
