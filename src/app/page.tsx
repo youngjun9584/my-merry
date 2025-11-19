@@ -2923,16 +2923,13 @@ function WeddingInvitationContent() {
                             어머니 박언자
                           </div>
                           <div className="text-xs text-gray-600">
-                            국민 39040104006012
+                            국민 626210172124
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
                             onClick={() =>
-                              copyAccountNumber(
-                                "39040104006012",
-                                "어머니 박언자"
-                              )
+                              copyAccountNumber("626210172124", "어머니 박언자")
                             }
                             className={`px-3 py-1 text-xs border rounded transition-colors ${
                               copiedAccount === "어머니 박언자"
