@@ -1869,39 +1869,7 @@ function WeddingInvitationContent() {
                       {/* 구분선 */}
                       <div className="h-6 w-px bg-gray-200"></div>
 
-                      {/* 카카오내비 */}
-                      <div
-                        className="flex items-center justify-center w-1/3 h-full cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => {
-                          const isMobile =
-                            /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-                              navigator.userAgent
-                            );
-                          if (isMobile) {
-                            window.location.href =
-                              "kakaonavi://destination?name=르비르모어&pos=127.0499893,37.5043884";
-                          } else {
-                            window.open(
-                              "https://map.kakao.com/link/search/르비르모어",
-                              "_blank"
-                            );
-                          }
-                        }}
-                      >
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 bg-yellow-400 rounded flex items-center justify-center mr-2">
-                            <span className="text-white font-bold text-xs">
-                              K
-                            </span>
-                          </div>
-                          <span className="text-sm text-gray-700 font-medium">
-                            카카오내비
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* 구분선 */}
-                      <div className="h-6 w-px bg-gray-200"></div>
+                     
 
                       {/* 티맵 */}
                       <div
